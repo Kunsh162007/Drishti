@@ -66,7 +66,11 @@ const App = (() => {
     });
     const mod = views[viewName] && views[viewName]();
     const el = document.getElementById(`view-${viewName}`);
-    if (!mod || !el) return;
+    if (!el) return;
+    if (!mod) {
+      el.innerHTML = UI.empty("View not loaded", `${viewName} module missing — try a hard refresh (Ctrl+Shift+R).`, "⚠");
+      return;
+    }
     if (!state.mounted[viewName]) {
       try { mod.mount(el); } catch (e) { console.error(e); el.innerHTML = UI.empty("View failed to load", String(e.message)); }
       state.mounted[viewName] = true;
@@ -122,5 +126,6 @@ const App = (() => {
   return { state, go, goWithFilter, loadMeta, fillSelect, boot };
 })();
 
-const Views = {};
-// Boot is triggered by the login gate (auth.js) after a successful sign-in.
+// NOTE: `window.Views = {}` is initialised in index.html BEFORE the view scripts
+// load, so view modules can register onto it. Boot is triggered by auth.js.
+window.Views = window.Views || {};

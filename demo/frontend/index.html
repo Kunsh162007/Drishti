@@ -25,7 +25,7 @@
   <!-- ECharts -->
   <script src="https://unpkg.com/echarts@5.5.1/dist/echarts.min.js"></script>
 
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/styles.css?v=2" />
 </head>
 <body>
   <!-- App shell -->
@@ -170,22 +170,24 @@
   <div id="toast-host" class="toast-host" aria-live="polite"></div>
 
   <!-- JS modules -->
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/views/dashboard.js"></script>
-  <script src="js/views/hotspots.js"></script>
-  <script src="js/views/network.js"></script>
-  <script src="js/views/cdr.js"></script>
-  <script src="js/views/cyber.js"></script>
-  <script src="js/views/predictive.js"></script>
-  <script src="js/views/patrol.js"></script>
-  <script src="js/views/missing.js"></script>
-  <script src="js/views/investigations.js"></script>
-  <script src="js/views/assistant.js"></script>
-  <script src="js/views/oversight.js"></script>
-  <script src="js/views/myshield.js"></script>
-  <script src="js/views/ingestion.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="js/api.js?v=2"></script>
+  <script src="js/ui.js?v=2"></script>
+  <!-- Views registry MUST exist before the view scripts run -->
+  <script>window.Views = {};</script>
+  <script src="js/views/dashboard.js?v=2"></script>
+  <script src="js/views/hotspots.js?v=2"></script>
+  <script src="js/views/network.js?v=2"></script>
+  <script src="js/views/cdr.js?v=2"></script>
+  <script src="js/views/cyber.js?v=2"></script>
+  <script src="js/views/predictive.js?v=2"></script>
+  <script src="js/views/patrol.js?v=2"></script>
+  <script src="js/views/missing.js?v=2"></script>
+  <script src="js/views/investigations.js?v=2"></script>
+  <script src="js/views/assistant.js?v=2"></script>
+  <script src="js/views/oversight.js?v=2"></script>
+  <script src="js/views/myshield.js?v=2"></script>
+  <script src="js/views/ingestion.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
+  <script src="js/auth.js?v=2"></script>
 </body>
 </html>
