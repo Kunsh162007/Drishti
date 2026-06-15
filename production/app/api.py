@@ -68,6 +68,22 @@ def me(user: User = Depends(get_current_user)):
     return {"username": user.username, "role": user.role, "full_name": user.full_name}
 
 
+# ---- /api-prefixed public aliases so the shared SPA (api.js uses /api) works ----------------
+@public.get("/api/health")
+def health_api(db: Session = Depends(get_session)):
+    return health(db)
+
+
+@public.post("/api/auth/login")
+def login_api(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
+    return login(form, db)
+
+
+@public.get("/api/auth/me")
+def me_api(user: User = Depends(get_current_user)):
+    return me(user)
+
+
 # ===================================================== protected (auth+audit) ==
 def audit_dep(request: Request, user: User = Depends(get_current_user),
               db: Session = Depends(get_session)) -> User:

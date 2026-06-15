@@ -10,7 +10,8 @@ import statistics
 from collections import Counter, defaultdict
 
 import pandas as pd
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, and_
 from sqlalchemy.orm import Session
 
@@ -19,6 +20,22 @@ from .db import get_session, engine
 from .models import Crime, Person, Vehicle, CDR, Account, Transaction, MissingPerson, AuditLog
 
 router = APIRouter(prefix="/api")
+
+# ---- demo auth (cosmetic gate; endpoints stay open, token is not enforced) -------------------
+DEMO_USERS = {"officer": "drishti", "analyst": "drishti", "admin": "drishti"}
+
+
+@router.post("/auth/login")
+def auth_login(form: OAuth2PasswordRequestForm = Depends()):
+    if DEMO_USERS.get(form.username) == form.password:
+        return {"access_token": f"demo-{form.username}", "token_type": "bearer",
+                "role": "analyst", "username": form.username}
+    raise HTTPException(status_code=401, detail="Invalid demo credentials. Try officer / drishti")
+
+
+@router.get("/auth/me")
+def auth_me():
+    return {"username": "officer", "role": "analyst", "mode": "demo"}
 
 # ---- optional analytics (built by the analytics agent) -------------------------------------
 try:

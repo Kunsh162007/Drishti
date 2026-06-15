@@ -37,26 +37,20 @@ const App = (() => {
     return state.meta;
   }
 
-  async function loadHealth() {
+  function renderStatus(h) {
     const dot = document.getElementById("health-dot");
     const summary = document.getElementById("meta-summary");
-    try {
-      const h = await API.get("/health", null, { silent: true });
-      state.health = h;
-      dot && dot.classList.add("ok");
-      const m = state.meta || {};
-      const t = m.totals || {};
-      const dr = m.date_range || {};
-      summary && (summary.innerHTML =
-        `<b style="color:var(--gold-soft)">${UI.num(t.crimes)}</b> FIRs · ` +
-        `<b style="color:var(--gold-soft)">${UI.num(t.persons)}</b> persons · ` +
-        `<b style="color:var(--gold-soft)">${UI.num(t.vehicles)}</b> vehicles` +
-        (dr.min ? ` · ${dr.min} → ${dr.max}` : "") +
-        ` · mode <span class="mono" style="color:var(--teal-bright)">${UI.esc(h.mode || "demo")}</span>`);
-    } catch (_) {
-      dot && dot.classList.add("err");
-      summary && (summary.textContent = "Intelligence core unreachable — start the backend (uvicorn backend.main:app).");
-    }
+    dot && dot.classList.remove("err");
+    dot && dot.classList.add("ok");
+    const m = state.meta || {};
+    const t = m.totals || {};
+    const dr = m.date_range || {};
+    summary && (summary.innerHTML =
+      `<b style="color:var(--gold-soft)">${UI.num(t.crimes)}</b> FIRs · ` +
+      `<b style="color:var(--gold-soft)">${UI.num(t.persons)}</b> persons · ` +
+      `<b style="color:var(--gold-soft)">${UI.num(t.vehicles)}</b> vehicles` +
+      (dr.min ? ` · ${dr.min} → ${dr.max}` : "") +
+      ` · mode <span class="mono" style="color:var(--teal-bright)">${UI.esc((h && h.mode) || "demo")}</span>`);
   }
 
   function go(viewName) {
@@ -93,10 +87,29 @@ const App = (() => {
   }
 
   async function boot() {
-    bindNav();
-    await loadMeta();
-    loadHealth();
-    go("dashboard");
+    bindNav();              // tabs are clickable immediately
+    go("dashboard");        // render UI right away (views show their own loaders)
+    const summary = document.getElementById("meta-summary");
+    const dot = document.getElementById("health-dot");
+    // Wake the server with retries (Render free tier can cold-start for ~50s).
+    for (let attempt = 0; attempt < 15; attempt++) {
+      try {
+        const h = await API.get("/health", null, { silent: true });
+        state.health = h;
+        await loadMeta();
+        renderStatus(h);
+        state.mounted.dashboard = false;   // re-mount dashboard now that data is live
+        go("dashboard");
+        return;
+      } catch (_) {
+        dot && dot.classList.remove("ok");
+        summary && (summary.textContent =
+          `Waking server… (free tier — first load can take ~60s) · attempt ${attempt + 1}`);
+        await new Promise((r) => setTimeout(r, 6000));
+      }
+    }
+    dot && dot.classList.add("err");
+    summary && (summary.textContent = "Intelligence core unreachable — please refresh the page.");
   }
 
   // populate a <select> from meta list with an "All" default
@@ -106,8 +119,8 @@ const App = (() => {
       (items || []).map((x) => `<option value="${UI.esc(x)}">${UI.esc(x)}</option>`).join("");
   }
 
-  return { state, go, goWithFilter, loadMeta, fillSelect };
+  return { state, go, goWithFilter, loadMeta, fillSelect, boot };
 })();
 
 const Views = {};
-document.addEventListener("DOMContentLoaded", () => App.boot());
+// Boot is triggered by the login gate (auth.js) after a successful sign-in.
