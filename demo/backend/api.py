@@ -132,6 +132,32 @@ def _h3_centroid(idx):
     return None, None
 
 
+def _enrich_cells(cells, rows, resolution):
+    """Attach a human-readable location (majority district + station) to each hex cell."""
+    col = f"h3_r{resolution}" if resolution in (7, 8, 9) else "h3_r8"
+    by_dist = defaultdict(Counter)
+    by_station = defaultdict(Counter)
+    for r in rows:
+        hx = r.get(col)
+        if hx and r.get("district"):
+            by_dist[hx][r["district"]] += 1
+            if r.get("police_station"):
+                by_station[hx][r["police_station"]] += 1
+    for c in cells:
+        hx = c.get("h3")
+        if hx and by_dist.get(hx):
+            dist = by_dist[hx].most_common(1)[0][0]
+            station = by_station[hx].most_common(1)[0][0] if by_station.get(hx) else None
+            c["district"] = dist
+            c["station"] = station
+            c["label"] = f"{station}, {dist}" if station else dist
+        else:
+            c.setdefault("district", None)
+            c.setdefault("station", None)
+            c.setdefault("label", None)
+    return cells
+
+
 # ---- meta / health --------------------------------------------------------------------------
 @router.get("/health")
 def health(db: Session = Depends(get_session)):
@@ -160,8 +186,10 @@ def meta(db: Session = Depends(get_session)):
 # ---- crimes / stats -------------------------------------------------------------------------
 @router.get("/crimes")
 def crimes(db: Session = Depends(get_session), district=None, crime_type=None, category=None,
-           date_from=None, date_to=None, q=None, limit: int = 500, offset: int = 0):
+           date_from=None, date_to=None, q=None, h3=None, limit: int = 500, offset: int = 0):
     base = _filtered(db, district, crime_type, category, date_from, date_to, q)
+    if h3:
+        base = base.filter((Crime.h3_r7 == h3) | (Crime.h3_r8 == h3) | (Crime.h3_r9 == h3))
     total = base.count()
     rows = base.order_by(Crime.occurred_at.desc()).offset(offset).limit(min(limit, 5000)).all()
     return {"total": total, "items": _dicts(rows)}
@@ -217,7 +245,7 @@ def hotspots(db: Session = Depends(get_session), resolution: int = 8, crime_type
     rows = _dicts(_filtered(db, crime_type=crime_type, date_from=date_from, date_to=date_to).all())
     if A_hotspots:
         try:
-            return {"cells": A_hotspots.compute_hotspots(rows, resolution)}
+            return {"cells": _enrich_cells(A_hotspots.compute_hotspots(rows, resolution), rows, resolution)}
         except Exception:
             pass
     # fallback: count per hex + z-score significance
@@ -250,7 +278,7 @@ def emerging(db: Session = Depends(get_session), resolution: int = 8, period_day
     rows = _dicts(db.query(Crime).all())
     if A_hotspots and hasattr(A_hotspots, "emerging_hotspots"):
         try:
-            return {"cells": A_hotspots.emerging_hotspots(rows, resolution, period_days)}
+            return {"cells": _enrich_cells(A_hotspots.emerging_hotspots(rows, resolution, period_days), rows, resolution)}
         except Exception:
             pass
     col = f"h3_r{resolution}" if resolution in (7, 8, 9) else "h3_r8"
@@ -298,7 +326,7 @@ def risk(db: Session = Depends(get_session), resolution: int = 8):
     rows = _dicts(db.query(Crime).all())
     if A_risk:
         try:
-            return {"cells": A_risk.risk_scores(rows, resolution)}
+            return {"cells": _enrich_cells(A_risk.risk_scores(rows, resolution), rows, resolution)}
         except Exception:
             pass
     col = f"h3_r{resolution}" if resolution in (7, 8, 9) else "h3_r8"
@@ -729,7 +757,9 @@ def patrol_optimize(resolution: int = 8, units: int = 15, db: Session = Depends(
     rows = [r.as_dict() for r in db.query(Crime).all()]
     if A_patrol:
         try:
-            return A_patrol.optimize_patrol(rows, resolution, units)
+            result = A_patrol.optimize_patrol(rows, resolution, units)
+            result["assignments"] = _enrich_cells(result.get("assignments", []), rows, resolution)
+            return result
         except Exception:
             pass
     return {"assignments": [], "coverage_pct": 0, "summary": ""}

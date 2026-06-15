@@ -54,7 +54,7 @@ Views.Network = (() => {
 
   function ensureSigma() {
     if (renderer) return;
-    graph = new graphology.Graph({ multi: true, type: "directed" });
+    graph = new DGraph({ multi: true, type: "directed" });
     renderer = new Sigma(graph, document.getElementById("sigma-canvas"), {
       defaultEdgeColor: "rgba(230,237,245,.14)",
       labelColor: { color: "#E6EDF5" },
@@ -81,7 +81,7 @@ Views.Network = (() => {
       graph.setNodeAttribute(n, "y", Math.sin(ang) * R + (Math.random() - 0.5));
     });
     try {
-      forceAtlas2.assign(graph, { iterations: 220, settings: { gravity: 1.2, scalingRatio: 14, slowDown: 4, barnesHutOptimize: graph.order > 200 } });
+      if (DFA2 && DFA2.assign) DFA2.assign(graph, { iterations: 220, settings: { gravity: 1.2, scalingRatio: 14, slowDown: 4, barnesHutOptimize: graph.order > 200 } });
     } catch (e) { console.warn("layout", e); }
   }
 

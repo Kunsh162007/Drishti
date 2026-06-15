@@ -1,15 +1,9 @@
 /* ============================================================
-   patrol.js — Patrol Planning: place-based unit allocation to
-   forecast risk, with a coverage gauge and a deck.gl hex map.
+   patrol.js — Patrol Planning: place-based unit allocation,
+   coverage gauge, and a MapLibre 3D hex deployment map.
    ============================================================ */
 Views.Patrol = (() => {
-  let el, map, deckOverlay, assignments = [];
-
-  const RASTER_STYLE = {
-    version: 8,
-    sources: { osm: { type: "raster", tiles: ["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"], tileSize: 256, attribution: "© OSM © CARTO" } },
-    layers: [{ id: "osm", type: "raster", source: "osm" }],
-  };
+  let el, map, ready = false, assignments = [];
 
   function shell() {
     return `
@@ -17,10 +11,8 @@ Views.Patrol = (() => {
         <h1 class="view-title"><span class="vt-ico">◈</span> Patrol Planning</h1>
         <div class="view-sub">Allocate patrol units to forecast-risk locations to maximise coverage.</div>
       </div></div>
-
       <div class="banner info"><span class="b-ico">🛈</span><div>
         <b>Place-based allocation.</b> Units are assigned to high-risk <b>locations</b> (hex grid), never to target individuals.</div></div>
-
       <div class="controls">
         <div class="ctrl"><span class="ctrl-label">Patrol units</span>
           <input type="range" id="pt-units" min="5" max="50" value="15" style="vertical-align:middle">
@@ -28,11 +20,10 @@ Views.Patrol = (() => {
         <button class="btn btn-primary" id="pt-run">Optimise allocation</button>
         <span class="dim" id="pt-cov" style="margin-left:auto;align-self:center"></span>
       </div>
-
       <div class="grid" style="grid-template-columns:1.05fr .95fr;gap:16px;margin-top:12px">
         <div class="panel panel-pad" style="display:flex;flex-direction:column">
-          <h3 class="panel-title"><span class="dotaccent"></span> Recommended deployment</h3>
-          <div class="map-shell" style="height:300px;border-radius:12px;overflow:hidden;border:1px solid var(--stroke-soft)"><div id="patrol-map-canvas"></div></div>
+          <h3 class="panel-title"><span class="dotaccent"></span> Recommended deployment <span class="faint" style="margin-left:auto;font-weight:600;text-transform:none;letter-spacing:0">click a hex for details</span></h3>
+          <div class="map-shell" style="height:320px;border-radius:12px;overflow:hidden;border:1px solid var(--stroke-soft)"><div id="patrol-map-canvas"></div></div>
           <div class="row mt12" style="gap:16px;align-items:center">
             <div class="chart" id="pt-gauge" style="height:150px;width:180px"></div>
             <div class="dim" id="pt-summary" style="flex:1;font-size:12.5px"></div>
@@ -60,39 +51,37 @@ Views.Patrol = (() => {
   }
 
   function renderMap() {
-    if (!deckOverlay) return;
-    const valid = assignments.filter((a) => a.h3);
-    const maxU = Math.max(1, ...valid.map((a) => a.units || 1));
-    const layer = new deck.H3HexagonLayer({
-      id: "patrol-hex", data: valid, pickable: true, extruded: true, elevationScale: 800,
-      getHexagon: (d) => d.h3, getElevation: (d) => (d.expected_share || 0.05) * 10,
-      getFillColor: (d) => { const [r, g, b] = UI.rampColor((d.units || 1) / maxU); return [r, g, b, 220]; },
-      opacity: 0.85,
-    });
-    deckOverlay.setProps({
-      layers: [layer],
-      getTooltip: ({ object }) => object ? {
-        html: `<div class="deck-tip"><b>${object.units} unit(s)</b><br/>${UI.esc(object.top_type || "")}<br/>${UI.esc(object.rationale || "")}</div>`,
-        style: { background: "transparent" },
-      } : null,
-    });
+    if (!ready) return;
+    const maxU = Math.max(1, ...assignments.map((a) => a.units || 1));
+    const hex = MapKit.hexFC(assignments, (a) => a.units || 1, (a, v) => ({ _height: (v / maxU) * 6000 + 800, _color: MapKit.ramp(v / maxU) }));
+    map.getSource("pthex").setData(hex);
+    map.getSource("ptpts").setData(MapKit.pointFC(assignments, (a) => a.units || 1));
+  }
+
+  function showDetail(a, lngLat) {
+    const label = a.label || a.district || "Selected location";
+    new maplibregl.Popup({ closeButton: true, maxWidth: "300px" }).setLngLat(lngLat).setHTML(
+      `<div class="loc-pop"><b>${UI.esc(label)}</b>
+       <div class="lp-row"><span>Units</span><span>${a.units || 1}</span></div>
+       <div class="lp-row"><span>Coverage</span><span>${((a.expected_share || 0) * 100).toFixed(1)}%</span></div>
+       <div class="lp-row"><span>Top type</span><span>${UI.esc(UI.val(a.top_type))}</span></div>
+       <div class="dim" style="margin-top:6px">${UI.esc(UI.val(a.rationale))}</div></div>`).addTo(map);
   }
 
   function table() {
     const host = document.getElementById("pt-table");
     if (!assignments.length) { host.innerHTML = UI.empty("No assignments", "Run the optimiser.", "◈"); return; }
-    host.innerHTML = `<table class="tbl"><thead><tr><th>#</th><th>Cell</th><th>Units</th><th>Coverage</th><th>Top type</th><th>Rationale</th></tr></thead><tbody>${
-      assignments.map((a, i) => `<tr data-lat="${a.lat ?? ""}" data-lng="${a.lng ?? ""}" style="cursor:pointer">
+    host.innerHTML = `<table class="tbl"><thead><tr><th>#</th><th>Location</th><th>Units</th><th>Coverage</th><th>Top type</th></tr></thead><tbody>${
+      assignments.map((a, i) => `<tr data-lat="${a.lat ?? ""}" data-lng="${a.lng ?? ""}" data-h3="${UI.esc(a.h3 || "")}" style="cursor:pointer">
         <td><b style="color:var(--gold)">${i + 1}</b></td>
-        <td class="mono" style="font-size:10.5px">${UI.esc((a.h3 || "—").slice(0, 12))}</td>
+        <td>${UI.esc(a.label || a.district || "Unmapped area")}</td>
         <td><span class="badge" style="background:#C9A22722;color:#C9A227;border-color:#C9A22755">${a.units || 1}</span></td>
         <td class="dim">${((a.expected_share || 0) * 100).toFixed(1)}%</td>
         <td>${UI.esc(UI.val(a.top_type))}</td>
-        <td class="dim" style="font-size:11.5px">${UI.esc(UI.val(a.rationale))}</td>
       </tr>`).join("")}</tbody></table>`;
     host.querySelectorAll("tr[data-lat]").forEach((r) => r.addEventListener("click", () => {
       const lat = parseFloat(r.dataset.lat), lng = parseFloat(r.dataset.lng);
-      if (!isNaN(lat) && !isNaN(lng) && map) map.flyTo({ center: [lng, lat], zoom: 11, pitch: 45 });
+      if (!isNaN(lat) && !isNaN(lng) && map) { map.flyTo({ center: [lng, lat], zoom: 11, pitch: 50 }); const a = assignments.find((x) => x.h3 === r.dataset.h3); if (a) showDetail(a, [lng, lat]); }
     }));
   }
 
@@ -105,28 +94,35 @@ Views.Patrol = (() => {
       document.getElementById("pt-cov").textContent = `${(r.coverage_pct ?? 0).toFixed(1)}% of recent incidents covered`;
       document.getElementById("pt-summary").textContent = r.summary || "";
       gauge(r.coverage_pct || 0); renderMap(); table();
-    } catch (e) {
-      document.getElementById("pt-table").innerHTML = UI.empty("Failed", String(e.message), "⚠");
-    }
+    } catch (e) { document.getElementById("pt-table").innerHTML = UI.empty("Failed", String(e.message), "⚠"); }
+  }
+
+  function ensureLayers() {
+    const empty = { type: "FeatureCollection", features: [] };
+    map.addSource("pthex", { type: "geojson", data: empty });
+    map.addSource("ptpts", { type: "geojson", data: empty });
+    map.addLayer({ id: "pthex-fill", type: "fill-extrusion", source: "pthex", paint: { "fill-extrusion-color": ["coalesce", ["get", "_color"], "#C9A227"], "fill-extrusion-height": ["coalesce", ["get", "_height"], 0], "fill-extrusion-opacity": 0.85 } });
+    map.addLayer({ id: "pthex-line", type: "line", source: "pthex", paint: { "line-color": "#C9A227", "line-width": 0.6, "line-opacity": 0.5 } });
+    map.addLayer({ id: "pthit", type: "circle", source: "ptpts", paint: { "circle-radius": 16, "circle-color": "#fff", "circle-opacity": 0.01 } });
+    map.on("click", "pthit", (e) => { const f = e.features && e.features[0]; if (f) { const a = assignments.find((x) => x.h3 === f.properties.h3) || f.properties; showDetail(a, e.lngLat); } });
+    map.on("mouseenter", "pthit", () => { map.getCanvas().style.cursor = "pointer"; });
+    map.on("mouseleave", "pthit", () => { map.getCanvas().style.cursor = ""; });
+    ready = true;
   }
 
   function initMap() {
-    map = new maplibregl.Map({ container: "patrol-map-canvas", style: RASTER_STYLE, center: [76.5, 14.5], zoom: 5.4, pitch: 42, attributionControl: false });
-    deckOverlay = new deck.MapboxOverlay({ layers: [] });
-    map.addControl(deckOverlay);
-    map.on("load", () => { if (assignments.length) renderMap(); });
+    map = MapKit.createMap("patrol-map-canvas", { center: [76.0, 14.9], zoom: 5.6, pitch: 45 });
+    map.on("load", () => { ensureLayers(); if (assignments.length) renderMap(); });
   }
 
   function mount(node) {
-    el = node;
-    el.innerHTML = shell();
+    el = node; el.innerHTML = shell();
     const sl = document.getElementById("pt-units");
     sl.addEventListener("input", () => { document.getElementById("pt-units-val").textContent = sl.value; });
     document.getElementById("pt-run").addEventListener("click", run);
-    initMap();
-    run();
+    initMap(); run();
   }
-  function onShow() { if (map) setTimeout(() => map.resize(), 60); UI.resizeCharts(); }
+  function onShow() { if (map) setTimeout(() => map.resize(), 80); UI.resizeCharts(); }
 
   return { mount, onShow };
 })();

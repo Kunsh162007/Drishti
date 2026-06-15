@@ -157,7 +157,7 @@ Views.CDR = (() => {
 
   function ensureSigma() {
     if (renderer) return;
-    graph = new graphology.Graph({ multi: true, type: "directed" });
+    graph = new DGraph({ multi: true, type: "directed" });
     renderer = new Sigma(graph, document.getElementById("cdr-sigma"), {
       defaultEdgeColor: "rgba(230,237,245,.16)",
       labelColor: { color: "#E6EDF5" },
@@ -181,7 +181,7 @@ Views.CDR = (() => {
       graph.setNodeAttribute(n, "y", Math.sin(ang) * R + (Math.random() - 0.5));
     });
     try {
-      forceAtlas2.assign(graph, { iterations: 200, settings: { gravity: 1.2, scalingRatio: 14, slowDown: 4, barnesHutOptimize: graph.order > 200 } });
+      if (DFA2 && DFA2.assign) DFA2.assign(graph, { iterations: 200, settings: { gravity: 1.2, scalingRatio: 14, slowDown: 4, barnesHutOptimize: graph.order > 200 } });
     } catch (e) { console.warn("layout", e); }
   }
 
@@ -266,6 +266,11 @@ Views.CDR = (() => {
     el = node;
     el.innerHTML = shell();
     bind();
+    // Prefill a known-good subscriber + tower so the tools work immediately.
+    API.get("/cdr/sample", null, { silent: true }).then((s) => {
+      if (s && s.msisdn) { document.getElementById("cdr-msisdn").value = s.msisdn; analyse(); }
+      if (s && s.tower) document.getElementById("cdr-tower").value = s.tower;
+    }).catch(() => {});
     mounted = true;
   }
 

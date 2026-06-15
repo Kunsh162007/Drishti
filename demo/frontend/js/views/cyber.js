@@ -185,7 +185,7 @@ Views.Cyber = (() => {
 
   function ensureSigma() {
     if (renderer) return;
-    graph = new graphology.Graph({ multi: true, type: "directed" });
+    graph = new DGraph({ multi: true, type: "directed" });
     renderer = new Sigma(graph, document.getElementById("cy-sigma"), {
       defaultEdgeColor: "rgba(230,237,245,.16)",
       labelColor: { color: "#E6EDF5" },
@@ -212,7 +212,7 @@ Views.Cyber = (() => {
       graph.setNodeAttribute(n, "y", Math.sin(ang) * R + (Math.random() - 0.5));
     });
     try {
-      forceAtlas2.assign(graph, { iterations: 200, settings: { gravity: 1.2, scalingRatio: 16, slowDown: 4, barnesHutOptimize: graph.order > 200 } });
+      if (DFA2 && DFA2.assign) DFA2.assign(graph, { iterations: 200, settings: { gravity: 1.2, scalingRatio: 16, slowDown: 4, barnesHutOptimize: graph.order > 200 } });
     } catch (e) { console.warn("layout", e); }
   }
 
@@ -295,6 +295,10 @@ Views.Cyber = (() => {
     bind();
     ensureSigma();
     load();
+    // Prefill a traceable account so "Trace flow" works immediately.
+    API.get("/cyber/sample", null, { silent: true }).then((s) => {
+      if (s && s.account) document.getElementById("cy-acct").value = s.account;
+    }).catch(() => {});
     mounted = true;
   }
 
