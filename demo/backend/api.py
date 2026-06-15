@@ -794,6 +794,137 @@ def oversight_audit(limit: int = 50, db: Session = Depends(get_session)):
     return {"entries": entries, "integrity": integrity}
 
 
+# ---- Geographic profiling (Rossmo CGT) -------------------------------------------------------
+@router.get("/geo-profile")
+def geo_profile(crime_type: str = None, date_from: str = None, date_to: str = None,
+                resolution: int = 60, db: Session = Depends(get_session)):
+    try:
+        from .analytics import geoprofiling as A_gp
+    except Exception:
+        return {"points": [], "anchor": None, "total_crimes": 0, "unique_locs": 0, "params": {}}
+    rows = _dicts(
+        _filtered(db, crime_type=crime_type, date_from=date_from, date_to=date_to)
+        .filter(Crime.latitude.isnot(None), Crime.longitude.isnot(None))
+        .limit(2000).all()
+    )
+    try:
+        return A_gp.rossmo_surface(rows, grid_steps=min(80, max(30, int(resolution or 60))))
+    except Exception as e:
+        return {"points": [], "anchor": None, "total_crimes": len(rows), "unique_locs": 0,
+                "params": {}, "error": str(e)}
+
+
+# ---- Crime forecasting (Holt ETS) -----------------------------------------------------------
+@router.get("/forecast")
+def forecast_view(crime_type: str = None, district: str = None, months: int = 3,
+                  db: Session = Depends(get_session)):
+    try:
+        from .analytics import forecasting as A_fc
+    except Exception:
+        return {"history": [], "forecast": [], "trend": "stable", "model": "N/A", "rmse": 0}
+    rows = _dicts(_filtered(db, crime_type=crime_type, district=district).all())
+    bucket: Counter = Counter()
+    for r in rows:
+        key = (r.get("occurred_at") or "")[:7]
+        if key and len(key) == 7:
+            bucket[key] += 1
+    pts = [{"period": k, "count": v} for k, v in sorted(bucket.items())]
+    try:
+        return A_fc.forecast_crimes(pts, horizon=min(12, max(1, int(months or 3))))
+    except Exception as e:
+        return {"history": pts, "forecast": [], "trend": "stable", "model": "error", "rmse": 0,
+                "error": str(e)}
+
+
+# ---- Near-repeat risk -----------------------------------------------------------------------
+@router.get("/near-repeat")
+def near_repeat(crime_type: str = None, days: int = 14, db: Session = Depends(get_session)):
+    try:
+        from .analytics import forecasting as A_fc
+    except Exception:
+        return {"alerts": []}
+    rows = _dicts(_filtered(db, crime_type=crime_type).order_by(Crime.occurred_at.desc()).limit(2000).all())
+    try:
+        alerts = A_fc.near_repeat_risk(rows, days_window=int(days or 14))
+        return {"alerts": alerts}
+    except Exception:
+        return {"alerts": []}
+
+
+# ---- Temporal analysis (day × hour matrix) --------------------------------------------------
+@router.get("/temporal")
+def temporal(district: str = None, crime_type: str = None, db: Session = Depends(get_session)):
+    import datetime
+    rows = _dicts(_filtered(db, district=district, crime_type=crime_type).all())
+    matrix = [[0] * 24 for _ in range(7)]
+    dow_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    for r in rows:
+        occ = r.get("occurred_at")
+        hour = r.get("hour")
+        if occ and hour is not None:
+            try:
+                parts = str(occ)[:10].split("-")
+                d = datetime.date(int(parts[0]), int(parts[1]), int(parts[2]))
+                matrix[d.weekday()][int(hour)] += 1
+            except Exception:
+                pass
+    # Calendar heatmap data (by date)
+    by_date: Counter = Counter()
+    for r in rows:
+        day = (r.get("occurred_at") or "")[:10]
+        if len(day) == 10:
+            by_date[day] += 1
+    return {
+        "matrix": [{"day": dow_names[i], "hours": matrix[i]} for i in range(7)],
+        "calendar": [{"date": k, "count": v} for k, v in sorted(by_date.items())],
+        "total": sum(sum(row) for row in matrix),
+    }
+
+
+# ---- Suspect intelligence (deep person profile) ---------------------------------------------
+@router.get("/suspect/profile")
+def suspect_profile(name: str = Query(...), db: Session = Depends(get_session)):
+    persons = db.query(Person).filter(Person.full_name.ilike(f"%{name}%")).limit(200).all()
+    if not persons:
+        return {"name": name, "matches": [], "firs": [], "stats": {}, "vehicles": []}
+    tids = list({p.true_identity_id for p in persons if p.true_identity_id})
+    all_p = (db.query(Person).filter(Person.true_identity_id.in_(tids)).all()
+             if tids else list(persons))
+    fir_nos = list({p.fir_number for p in all_p})[:200]
+    crimes_ = db.query(Crime).filter(Crime.fir_number.in_(fir_nos)).all()
+    by_type: Counter = Counter(c.crime_type for c in crimes_)
+    by_role: Counter = Counter(p.role for p in all_p)
+    by_district: Counter = Counter(c.district for c in crimes_)
+    by_hour = [0] * 24
+    for c in crimes_:
+        if c.hour is not None:
+            try:
+                by_hour[int(c.hour)] += 1
+            except Exception:
+                pass
+    return {
+        "name": name,
+        "matches": [{"name": p.full_name, "role": p.role, "fir": p.fir_number,
+                     "tid": p.true_identity_id} for p in persons[:30]],
+        "firs": [{"fir_number": c.fir_number, "crime_type": c.crime_type,
+                  "district": c.district, "occurred_at": (c.occurred_at or "")[:10],
+                  "status": c.status, "lat": c.latitude, "lng": c.longitude,
+                  "property_value_inr": c.property_value_inr}
+                 for c in crimes_[:60]],
+        "stats": {
+            "total_firs": len(fir_nos),
+            "unique_identities": len(tids) or len(persons),
+            "top_type": by_type.most_common(1)[0][0] if by_type else None,
+            "by_type": [{"name": k, "value": v} for k, v in by_type.most_common(8)],
+            "by_role": [{"name": k, "value": v} for k, v in by_role.most_common()],
+            "by_district": [{"name": k, "value": v} for k, v in by_district.most_common(6)],
+            "by_hour": by_hour,
+        },
+        "vehicles": [{"reg": v.reg_number, "type": v.vehicle_type, "fir": v.fir_number}
+                     for v in db.query(Vehicle).filter(Vehicle.fir_number.in_(fir_nos)).all()[:20]],
+    }
+
+
 # ---- Auto-drafted, grounded intelligence briefing -------------------------------------------
 @router.get("/briefing")
 def briefing(district: str = None, db: Session = Depends(get_session)):

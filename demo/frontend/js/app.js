@@ -26,6 +26,10 @@ const App = (() => {
     oversight: () => Views.Oversight,
     myshield: () => Views.MyShield,
     ingestion: () => Views.Ingestion,
+    temporal: () => Views.Temporal,
+    geoprofiler: () => Views.Geoprofiler,
+    forecast: () => Views.Forecast,
+    suspect: () => Views.Suspect,
   };
 
   async function loadMeta() {
