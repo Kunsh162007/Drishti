@@ -1,0 +1,42 @@
+# ============================================================================
+# DRISHTI — Render Blueprint (FREE tier)  [repo-root copy for auto-detection]
+# ----------------------------------------------------------------------------
+# Deploy the demo on Render's free plan with ZERO external services and NO keys.
+# Render Blueprints look for render.yaml at the REPOSITORY ROOT — this file.
+# `rootDir: demo` makes Render run every command from inside the demo/ folder.
+#
+# HOW TO DEPLOY
+#   1. Render Dashboard → New → Blueprint → connect github.com/Kunsh162007/Drishti
+#   2. Render auto-detects this file. Click Apply.
+#   3. First build runs data generation + DB seed (~1-2 min), then it's live.
+# ============================================================================
+
+services:
+  - type: web
+    name: drishti-demo
+    runtime: python
+    plan: free                      # free tier (cold-starts after ~15 min idle)
+    rootDir: demo                    # run everything from inside the demo/ folder
+    autoDeploy: true
+
+    buildCommand: |
+      pip install -r requirements.txt
+      python scripts/generate_data.py
+      python scripts/generate_extended_data.py
+      python scripts/seed_db.py
+
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: DRISHTI_MODE
+        value: demo
+      - key: LLM_PROVIDER
+        value: none
+      - key: LLM_API_KEY
+        value: ""
+      - key: LLM_MODEL
+        value: ""
+      - key: PYTHON_VERSION
+        value: "3.12.7"

@@ -37,6 +37,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python scripts/generate_data.py
+      python scripts/generate_extended_data.py
       python scripts/seed_db.py
 
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
