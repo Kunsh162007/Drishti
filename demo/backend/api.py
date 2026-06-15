@@ -700,10 +700,18 @@ def cyber_overview(db: Session = Depends(get_session)):
     crimes = [r.as_dict() for r in db.query(Crime).filter(Crime.crime_category == "Cybercrime").all()]
     if A_cyber:
         try:
-            return A_cyber.cyber_overview(crimes)
+            result = A_cyber.cyber_overview(crimes)
+            try:
+                accounts = [r.as_dict() for r in db.query(Account).all()]
+                txns = [r.as_dict() for r in db.query(Transaction).all()]
+                result.setdefault("kpis", {})["mule_accounts"] = len(A_cyber.detect_mules(accounts, txns, limit=10000))
+            except Exception:
+                pass
+            return result
         except Exception:
             pass
-    return {"kpis": {"total": len(crimes)}, "by_type": [], "trend": [], "top_districts": []}
+    return {"kpis": {"total_cases": len(crimes), "total_loss": 0, "mule_accounts": 0, "recovery_rate": 0.0},
+            "by_type": [], "trend": [], "top_districts": []}
 
 
 @router.get("/cyber/mules")

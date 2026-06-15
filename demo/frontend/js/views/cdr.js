@@ -186,6 +186,8 @@ Views.CDR = (() => {
   }
 
   function renderNetwork(data, target) {
+    // Destroy stale renderer so we always get a fresh Sigma on a properly-laid-out container.
+    if (renderer) { try { renderer.kill(); } catch (_) {} renderer = null; graph = null; }
     ensureSigma();
     if (renderer) renderer.resize();
     graph.clear();

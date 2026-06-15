@@ -45,7 +45,10 @@ def cyber_overview(crimes: list[dict]) -> dict:
     cyber = [c for c in (crimes or []) if (c.get("crime_category") == "Cybercrime")]
     total = len(cyber)
     if total == 0:
-        return {"kpis": {"total": 0}, "by_type": [], "trend": [], "top_districts": []}
+        return {"kpis": {"total_cases": 0, "total_loss": 0, "mule_accounts": 0, "recovery_rate": 0.0},
+                "by_type": [], "trend": [], "top_districts": []}
+
+    total_loss = int(sum(float(c.get("property_value_inr") or 0) for c in cyber))
 
     by_type = defaultdict(int)
     by_district = defaultdict(int)
@@ -68,7 +71,12 @@ def cyber_overview(crimes: list[dict]) -> dict:
     trend = [{"period": p, "count": by_month[p]} for p in sorted(by_month)]
 
     return {
-        "kpis": {"total": total},
+        "kpis": {
+            "total_cases": total,
+            "total_loss": total_loss,
+            "mule_accounts": 0,   # augmented by the API endpoint
+            "recovery_rate": 0.0,
+        },
         "by_type": by_type_l,
         "trend": trend,
         "top_districts": top_districts,

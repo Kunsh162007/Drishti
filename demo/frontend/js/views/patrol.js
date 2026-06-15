@@ -51,11 +51,19 @@ Views.Patrol = (() => {
   }
 
   function renderMap() {
-    if (!ready) return;
+    if (!ready || !assignments.length) return;
     const maxU = Math.max(1, ...assignments.map((a) => a.units || 1));
     const hex = MapKit.hexFC(assignments, (a) => a.units || 1, (a, v) => ({ _height: (v / maxU) * 6000 + 800, _color: MapKit.ramp(v / maxU) }));
     map.getSource("pthex").setData(hex);
-    map.getSource("ptpts").setData(MapKit.pointFC(assignments, (a) => a.units || 1));
+    const pts = MapKit.pointFC(assignments, (a) => a.units || 1);
+    map.getSource("ptpts").setData(pts);
+    // Zoom to assignment locations so they're always visible.
+    const lngs = assignments.map((a) => a.lng).filter((x) => x != null);
+    const lats = assignments.map((a) => a.lat).filter((x) => x != null);
+    if (lngs.length) {
+      map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+        { padding: 60, maxZoom: 9, pitch: 45, duration: 800 });
+    }
   }
 
   function showDetail(a, lngLat) {
@@ -101,9 +109,10 @@ Views.Patrol = (() => {
     const empty = { type: "FeatureCollection", features: [] };
     map.addSource("pthex", { type: "geojson", data: empty });
     map.addSource("ptpts", { type: "geojson", data: empty });
-    map.addLayer({ id: "pthex-fill", type: "fill-extrusion", source: "pthex", paint: { "fill-extrusion-color": ["coalesce", ["get", "_color"], "#C9A227"], "fill-extrusion-height": ["coalesce", ["get", "_height"], 0], "fill-extrusion-opacity": 0.85 } });
+    map.addLayer({ id: "pthex-fill", type: "fill-extrusion", source: "pthex", paint: { "fill-extrusion-color": ["coalesce", ["get", "_color"], "#C9A227"], "fill-extrusion-height": ["coalesce", ["get", "_height"], 0], "fill-extrusion-base": 0, "fill-extrusion-opacity": 0.85 } });
     map.addLayer({ id: "pthex-line", type: "line", source: "pthex", paint: { "line-color": "#C9A227", "line-width": 0.6, "line-opacity": 0.5 } });
-    map.addLayer({ id: "pthit", type: "circle", source: "ptpts", paint: { "circle-radius": 16, "circle-color": "#fff", "circle-opacity": 0.01 } });
+    map.addLayer({ id: "ptpts-vis", type: "circle", source: "ptpts", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 6, 10, 16], "circle-color": "#C9A227", "circle-opacity": 0.9, "circle-stroke-color": "#0a1628", "circle-stroke-width": 1.5 } });
+    map.addLayer({ id: "pthit", type: "circle", source: "ptpts", paint: { "circle-radius": 18, "circle-color": "#fff", "circle-opacity": 0.01 } });
     map.on("click", "pthit", (e) => { const f = e.features && e.features[0]; if (f) { const a = assignments.find((x) => x.h3 === f.properties.h3) || f.properties; showDetail(a, e.lngLat); } });
     map.on("mouseenter", "pthit", () => { map.getCanvas().style.cursor = "pointer"; });
     map.on("mouseleave", "pthit", () => { map.getCanvas().style.cursor = ""; });
