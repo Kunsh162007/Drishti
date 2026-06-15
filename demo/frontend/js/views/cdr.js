@@ -187,6 +187,7 @@ Views.CDR = (() => {
 
   function renderNetwork(data, target) {
     ensureSigma();
+    if (renderer) renderer.resize();
     graph.clear();
     const nodes = data.nodes || [], edges = data.edges || [];
     const stats = document.getElementById("cdr-net-stats");
@@ -195,7 +196,7 @@ Views.CDR = (() => {
     edges.forEach((e) => { deg[e.source] = (deg[e.source] || 0) + 1; deg[e.target] = (deg[e.target] || 0) + 1; });
     nodes.forEach((n) => {
       if (graph.hasNode(n.id)) return;
-      const isTarget = n.id === target || (n.meta && n.meta.is_target);
+      const isTarget = n.id === `phone:${target}` || (n.meta && n.meta.is_target);
       const color = isTarget ? TYPE_COLOR.target : TYPE_COLOR.phone;
       const d = deg[n.id] || 1;
       graph.addNode(n.id, {

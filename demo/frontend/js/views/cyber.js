@@ -218,6 +218,7 @@ Views.Cyber = (() => {
 
   function renderFlow(data) {
     ensureSigma();
+    if (renderer) renderer.resize();
     graph.clear();
     const nodes = data.nodes || [], edges = data.edges || [];
     const stats = document.getElementById("cy-flow-stats");
@@ -293,7 +294,6 @@ Views.Cyber = (() => {
     el = node;
     el.innerHTML = shell();
     bind();
-    ensureSigma();
     load();
     // Prefill a traceable account so "Trace flow" works immediately.
     API.get("/cyber/sample", null, { silent: true }).then((s) => {
@@ -303,7 +303,7 @@ Views.Cyber = (() => {
   }
 
   function onShow() {
-    if (renderer) setTimeout(() => renderer.refresh(), 60);
+    if (renderer) setTimeout(() => { renderer.resize(); renderer.refresh(); }, 60);
     UI.resizeCharts();
   }
 

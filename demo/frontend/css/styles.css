@@ -242,7 +242,7 @@ table.tbl tr:hover td{background:rgba(230,237,245,.03)}
 
 /* ---------- Map ---------- */
 .map-shell{position:relative;height:100%}
-#map-canvas,#risk-map-canvas{position:absolute;inset:0}
+#map-canvas,#risk-map-canvas,#patrol-map-canvas{position:absolute;inset:0}
 .map-overlay{position:absolute;z-index:5;pointer-events:none}
 .map-overlay > *{pointer-events:auto}
 .map-controls{top:16px;left:16px;display:flex;gap:10px;flex-wrap:wrap;max-width:calc(100% - 290px)}
