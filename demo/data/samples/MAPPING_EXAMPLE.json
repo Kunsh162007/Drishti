@@ -1,0 +1,23 @@
+{
+  "_comment": "Map YOUR arbitrary column names (keys) to DRISHTI canonical fields (values). Pass this JSON as the 'mapping' field to POST /ingest. Unmapped canonical fields are treated as missing (never fabricated).",
+  "mapping": {
+    "FIR No": "fir_number",
+    "Dist": "district",
+    "PS": "police_station",
+    "Offence": "crime_type",
+    "Category": "crime_category",
+    "Lat": "latitude",
+    "Long": "longitude",
+    "Date of Offence": "occurred_at",
+    "Date Reported": "reported_at",
+    "MO": "modus_operandi",
+    "Remarks": "description",
+    "Case Status": "status",
+    "Loss Value": "property_value_inr",
+    "Weapon": "weapon_used"
+  },
+  "notes": [
+    "Date columns are parsed to ISO8601; hour/day_of_week/h3_* are derived if lat/lng present.",
+    "Any canonical column absent from the mapping is reported in missing_report, not invented."
+  ]
+}

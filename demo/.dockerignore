@@ -1,0 +1,35 @@
+# Keep the image small and reproducible.
+# NOTE: we deliberately DO NOT ignore data/seed and data/samples — those CSV/
+# JSON/xlsx/geojson files are the seed inputs (and are regenerated at build
+# time anyway). We only drop the throwaway compiled DB and caches.
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Local env / secrets — never bake into the image.
+.env
+.env.*
+!.env.example
+
+# The SQLite DB is rebuilt during `docker build`; don't copy a stale one in.
+data/*.db
+*.db
+*.sqlite
+*.sqlite3
+
+# VCS / editor / OS noise.
+.git/
+.gitignore
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Container/build descriptors (not needed inside the image).
+Dockerfile
+.dockerignore

@@ -1,0 +1,194 @@
+mp_id,fir_number,name,age,gender,last_seen_date,last_seen_location,district,risk_tier,status,repeat_count
+MP00000,FIR-2025-000022,Zaitra Brar,57,Female,2024-06-27,last seen near bus stand,Bengaluru City,Medium,Closed,0
+MP00001,FIR-2023-000028,Rachana Bir,,Female,2025-05-14,left home without informing,Shivamogga,Medium,Traced,1
+MP00002,FIR-2025-000130,Luke Shenoy,73,Male,2025-09-30,did not return from college,Bengaluru City,High,Open,0
+MP00003,FIR-2023-000144,Indali Venkatesh,19,Female,2024-07-02,left home without informing,Gadag,Medium,Open,1
+MP00004,FIR-2025-000206,Chandani Mani,50,Female,2024-02-06,last seen near bus stand,Mysuru,Medium,Closed,2
+MP00005,FIR-2024-000301,Nimrat Ram,55,Female,2025-09-19,did not return from college,Bengaluru City,High,Open,1
+MP00006,FIR-2024-000321,Henry Memon,28,Male,2025-12-09,last seen near bus stand,Gadag,Medium,Open,2
+MP00007,FIR-2024-000373,Inaya Nayak,29,Female,2024-01-29,left home without informing,Mysuru,Low,Open,0
+MP00008,FIR-2025-000410,Wahab Purohit,32,Male,2023-07-04,,Bengaluru City,Medium,Open,0
+MP00009,FIR-2024-000417,Ekapad Badal,30,Male,2023-11-11,did not return from college,Udupi,Medium,Traced,0
+MP00010,FIR-2024-000421,Zaid Varghese,34,Male,2025-12-18,,Ramanagara,Low,Open,0
+MP00011,FIR-2023-000424,Brijesh Mander,49,Male,2024-08-01,did not return from college,Bengaluru City,Medium,Traced,2
+MP00012,FIR-2025-000430,Ayush Nair,,Male,2024-05-18,did not return from college,Ballari,High,Traced,1
+MP00013,FIR-2026-000487,Abhimanyu Swamy,37,Male,2023-09-30,last seen near bus stand,Bengaluru City,Medium,Closed,0
+MP00014,FIR-2024-000497,Ronith Parekh,63,Male,2023-12-02,did not return from college,Bengaluru City,High,Closed,0
+MP00015,FIR-2025-000530,Simon Dar,29,Male,2024-03-07,did not return from college,Udupi,Medium,Traced,0
+MP00016,FIR-2025-000578,Theodore Gupta,35,Male,2024-07-02,last seen near bus stand,Chamarajanagar,High,Traced,0
+MP00017,FIR-2024-000621,Jhalak Karan,,Female,2025-12-21,left home without informing,Tumakuru,Low,Open,1
+MP00018,FIR-2023-000724,Osha Krishnan,,Female,2025-01-01,left home without informing,Chitradurga,Medium,Open,1
+MP00019,FIR-2026-000751,Ryan Bava,36,Male,2026-04-30,last seen near bus stand,Hubballi-Dharwad,High,Open,0
+MP00020,FIR-2025-000770,Divya Rama,45,Female,2024-07-26,last seen near bus stand,Bengaluru City,High,Traced,0
+MP00021,FIR-2026-000803,Anita Narasimhan,67,Female,2024-02-27,last seen near bus stand,Bengaluru City,High,Open,0
+MP00022,FIR-2023-000804,Vanya Kara,37,Female,2024-07-03,did not return from college,Bengaluru City,High,Open,0
+MP00023,FIR-2025-000866,Janaki Chander,55,Female,2023-12-12,left home without informing,Uttara Kannada,Low,Open,3
+MP00024,FIR-2023-000880,Caleb Gola,19,Male,2025-06-25,left home without informing,Bengaluru City,Medium,Traced,1
+MP00025,FIR-2023-001028,Wriddhish Divan,36,Male,2026-04-12,did not return from college,Uttara Kannada,High,Traced,1
+MP00026,FIR-2026-001095,Abeer Prabhakar,71,Male,2025-03-06,,Belagavi,Medium,Open,0
+MP00027,FIR-2026-001151,Samaksh Nagi,63,Male,2023-09-08,did not return from college,Bengaluru Rural,High,Traced,0
+MP00028,FIR-2025-001158,Unnati Boase,47,Female,2023-10-13,last seen near bus stand,Kolar,Medium,Closed,2
+MP00029,FIR-2024-001161,Tamanna Prakash,35,Female,2026-05-09,left home without informing,Bengaluru Rural,Low,Open,0
+MP00030,FIR-2026-001183,Benjamin Vig,68,Male,2024-06-16,left home without informing,Bengaluru City,High,Traced,0
+MP00031,FIR-2023-001236,Amruta Raval,62,Female,2025-06-20,did not return from college,Raichur,Medium,Traced,0
+MP00032,FIR-2024-001321,Jyoti Thakur,,Female,2023-08-22,last seen near bus stand,Tumakuru,High,Closed,0
+MP00033,FIR-2025-001350,Ronith Bumb,74,Male,2024-11-21,left home without informing,Koppal,High,Open,0
+MP00034,FIR-2024-001377,Ansh Narayanan,38,Male,2023-07-13,did not return from college,Hubballi-Dharwad,Low,Open,0
+MP00035,FIR-2025-001470,Neelima Lad,23,Female,2024-07-02,,Chikkamagaluru,Medium,Closed,0
+MP00036,FIR-2026-001487,Ekalinga Srivastava,,Male,2024-04-05,last seen near bus stand,Mangaluru,Medium,Open,0
+MP00037,FIR-2023-001496,Oni Krishnamurthy,45,Female,2025-10-20,did not return from college,Bengaluru City,Low,Open,2
+MP00038,FIR-2024-001545,Girindra Pingle,43,Male,2024-01-05,did not return from college,Mangaluru,High,Open,2
+MP00039,FIR-2023-001644,Laksh Manda,57,Male,2024-07-01,,Mangaluru,Medium,Open,3
+MP00040,FIR-2024-001669,Dalaja Bains,34,Female,2025-02-05,left home without informing,Mysuru,High,Traced,0
+MP00041,FIR-2024-001801,Garima Mallick,26,Female,2025-06-25,did not return from college,Ramanagara,Medium,Traced,2
+MP00042,FIR-2026-001823,Reyansh Das,62,Male,2024-10-18,left home without informing,Bengaluru Rural,Medium,Traced,0
+MP00043,FIR-2026-001907,Upasna Sawhney,28,Female,2025-03-04,last seen near bus stand,Bengaluru City,Medium,Open,0
+MP00044,FIR-2023-001916,Nisha Zachariah,63,Female,2024-12-13,did not return from college,Tumakuru,Medium,Open,0
+MP00045,FIR-2026-001951,Abhimanyu Savant,62,Male,2024-01-21,left home without informing,Mangaluru,Low,Open,0
+MP00046,FIR-2025-001966,Mitesh Sharaf,,Male,2024-06-23,left home without informing,Chamarajanagar,High,Open,0
+MP00047,FIR-2025-001978,Yahvi Chakraborty,48,Female,2026-04-04,left home without informing,Bidar,Low,Closed,0
+MP00048,FIR-2025-002034,Fariq Suresh,43,Male,2023-09-08,left home without informing,Chamarajanagar,Medium,Open,0
+MP00049,FIR-2026-002087,Vansha Yogi,55,Female,2024-11-16,did not return from college,Bagalkote,Medium,Closed,0
+MP00050,FIR-2024-002145,Xiti Hans,70,Female,2025-03-23,did not return from college,Belagavi,High,Traced,0
+MP00051,FIR-2025-002222,Panini Patel,56,Female,2023-06-18,left home without informing,Mangaluru,Medium,Closed,0
+MP00052,FIR-2024-002229,Akshay Luthra,54,Male,2025-03-01,,Hubballi-Dharwad,Medium,Traced,0
+MP00053,FIR-2024-002253,Caleb Kaur,56,Male,2024-03-14,left home without informing,Vijayapura,Medium,Traced,1
+MP00054,FIR-2026-002327,Tara Salvi,53,Female,2023-07-26,left home without informing,Belagavi,High,Open,0
+MP00055,FIR-2024-002377,Edhitha Cherian,35,Female,2023-09-09,left home without informing,Kolar,Medium,Open,2
+MP00056,FIR-2025-002474,Rohan Mahal,23,Male,2025-09-22,left home without informing,Hubballi-Dharwad,High,Open,0
+MP00057,FIR-2025-002482,Tamanna Narayanan,25,Female,2025-11-28,last seen near bus stand,Chitradurga,Medium,Closed,0
+MP00058,FIR-2023-002524,Anjali Murthy,,Female,2026-05-22,left home without informing,Mandya,Low,Open,0
+MP00059,FIR-2025-002566,Tara Munshi,18,Female,2025-07-23,left home without informing,Bengaluru City,High,Traced,2
+MP00060,FIR-2025-002574,Ishita Bhatt,67,Female,2024-07-11,did not return from college,Bengaluru City,High,Traced,0
+MP00061,FIR-2026-002583,Harshil Swamy,28,Male,2024-06-05,did not return from college,Kolar,Low,Open,1
+MP00062,FIR-2026-002639,Hemang Kota,41,Male,2023-10-05,,Chitradurga,High,Open,0
+MP00063,FIR-2025-002650,Jonathan Shroff,55,Male,2026-04-12,left home without informing,Ramanagara,Medium,Traced,0
+MP00064,FIR-2025-002682,Charles Yogi,53,Male,2026-02-26,did not return from college,Mysuru,Medium,Open,0
+MP00065,FIR-2026-002691,Ekansh Buch,63,Male,2025-09-19,left home without informing,Hassan,Low,Traced,0
+MP00066,FIR-2024-002713,Anita Nigam,51,Female,2024-11-01,left home without informing,Ballari,High,Open,3
+MP00067,FIR-2023-002720,Alexander Jain,70,Male,2024-03-21,last seen near bus stand,Mandya,Low,Open,0
+MP00068,FIR-2026-002747,Arjun Mahajan,37,Male,2024-09-15,last seen near bus stand,Belagavi,Medium,Traced,0
+MP00069,FIR-2023-002876,Yatin Garde,63,Male,2024-08-30,left home without informing,Shivamogga,Medium,Open,0
+MP00070,FIR-2026-002887,Darsh Dalal,29,Male,2025-11-30,last seen near bus stand,Bengaluru City,Medium,Open,0
+MP00071,FIR-2023-002944,Eesha Chaudry,45,Female,2025-10-18,last seen near bus stand,Bengaluru City,High,Open,0
+MP00072,FIR-2024-002977,Diya Ratta,46,Female,2024-05-11,last seen near bus stand,Belagavi,Medium,Open,0
+MP00073,FIR-2023-002988,Reyansh Vyas,20,Male,2024-11-25,last seen near bus stand,Bidar,Low,Traced,1
+MP00074,FIR-2025-002998,Tejas Chanda,,Male,2024-02-28,did not return from college,Bengaluru City,High,Open,1
+MP00075,FIR-2024-003021,Baljiwan Wason,,Male,2023-12-17,last seen near bus stand,Bengaluru Rural,Low,Traced,4
+MP00076,FIR-2024-003029,Harinakshi Dewan,40,Female,2024-01-05,left home without informing,Bengaluru City,High,Traced,0
+MP00077,FIR-2024-003033,Panini Kibe,47,Female,2023-11-17,left home without informing,Dakshina Kannada,High,Open,2
+MP00078,FIR-2024-003081,Gauri Bhatnagar,57,Female,2023-07-11,left home without informing,Vijayapura,High,Traced,0
+MP00079,FIR-2024-003093,Vincent Tata,9,Male,2025-11-21,did not return from college,Mangaluru,High,Open,0
+MP00080,FIR-2026-003131,Mekhala Agate,50,Female,2024-02-28,,Vijayapura,Medium,Closed,0
+MP00081,FIR-2023-003208,Vrishti Patla,32,Female,2025-07-01,did not return from college,Hubballi-Dharwad,High,Traced,0
+MP00082,FIR-2024-003257,Ekta Ram,27,Female,2025-08-04,,Davanagere,Low,Traced,0
+MP00083,FIR-2025-003278,Lakshit Ranganathan,31,Male,2024-03-25,last seen near bus stand,Mysuru,Medium,Open,0
+MP00084,FIR-2023-003300,Gaurangi Setty,68,Female,2024-12-05,left home without informing,Bengaluru Rural,Low,Traced,1
+MP00085,FIR-2024-003329,Gautam Chakrabarti,31,Male,2025-04-27,last seen near bus stand,Ramanagara,High,Traced,0
+MP00086,FIR-2026-003351,Oliver Bumb,30,Male,2025-08-30,did not return from college,Mangaluru,Medium,Open,0
+MP00087,FIR-2026-003383,Zehaan Gola,20,Male,2024-03-23,last seen near bus stand,Udupi,High,Traced,1
+MP00088,FIR-2026-003399,Hiral Sabharwal,28,Female,2024-11-17,left home without informing,Mandya,Medium,Closed,1
+MP00089,FIR-2024-003561,Lipika Toor,,Female,2024-10-20,did not return from college,Bengaluru City,Low,Closed,0
+MP00090,FIR-2024-003569,Tristan Narasimhan,46,Male,2026-02-19,last seen near bus stand,Kalaburagi,Medium,Closed,0
+MP00091,FIR-2025-003578,Azad Chaudhuri,24,Male,2025-06-09,did not return from college,Bengaluru City,Medium,Traced,0
+MP00092,FIR-2026-003583,Nitesh Vasa,35,Male,2025-07-26,last seen near bus stand,Bengaluru City,Medium,Traced,0
+MP00093,FIR-2023-003596,Raksha Sura,74,Female,2025-04-27,last seen near bus stand,Chikkaballapura,High,Open,2
+MP00094,FIR-2023-003612,Chakradhar Raman,60,Male,2025-08-12,,Mangaluru,Medium,Closed,0
+MP00095,FIR-2024-003653,Quincy Dugar,46,Male,2024-08-22,last seen near bus stand,Bidar,High,Open,0
+MP00096,FIR-2024-003685,Oni Dutta,68,Female,2025-01-30,did not return from college,Yadgir,Low,Open,2
+MP00097,FIR-2024-003705,Isaac Bera,24,Male,2024-03-22,did not return from college,Bengaluru City,High,Closed,2
+MP00098,FIR-2026-003715,Sarthak Agate,,Male,2023-10-22,last seen near bus stand,Chitradurga,Medium,Closed,1
+MP00099,FIR-2024-003717,Zilmil Sengupta,69,Female,2025-06-04,,Kalaburagi,High,Closed,0
+MP00100,FIR-2025-003754,Dipta Sama,38,Female,2024-05-02,last seen near bus stand,Bengaluru City,Medium,Open,1
+MP00101,FIR-2024-003773,Quincy Agate,70,Male,2023-09-09,,Ramanagara,Medium,Closed,2
+MP00102,FIR-2026-003791,Gautam Wagle,23,Male,2025-05-06,last seen near bus stand,Haveri,Medium,Open,2
+MP00103,FIR-2026-003819,Divya Oommen,63,Female,2025-04-18,did not return from college,Bengaluru City,Low,Closed,2
+MP00104,FIR-2023-003924,Sanaya Rout,49,Female,2025-12-06,did not return from college,Shivamogga,Medium,Open,1
+MP00105,FIR-2025-004034,Sneha Garg,52,Female,2025-04-16,last seen near bus stand,Bengaluru City,Low,Traced,3
+MP00106,FIR-2023-004036,Ekantika Nazareth,26,Female,2024-04-29,did not return from college,Vijayapura,Medium,Open,0
+MP00107,FIR-2024-004069,Zayyan Korpal,35,Male,2023-07-27,last seen near bus stand,Mysuru,Medium,Open,0
+MP00108,FIR-2025-004182,Anamika Kakar,71,Female,2024-01-24,did not return from college,Bengaluru City,High,Traced,0
+MP00109,FIR-2025-004246,Aarna Puri,62,Female,2025-04-17,did not return from college,Bengaluru City,Medium,Traced,0
+MP00110,FIR-2023-004256,Onveer Batta,18,Male,2025-02-10,left home without informing,Bengaluru Rural,Medium,Traced,0
+MP00111,FIR-2025-004390,Bakhshi Sampath,35,Male,2026-01-17,left home without informing,Belagavi,Medium,Traced,3
+MP00112,FIR-2024-004433,Devika Sani,44,Female,2024-08-14,did not return from college,Ramanagara,High,Open,2
+MP00113,FIR-2025-004450,Logan Krishnan,62,Male,2023-11-28,did not return from college,Chikkaballapura,High,Open,0
+MP00114,FIR-2023-004488,Liam Garg,60,Male,2024-07-27,left home without informing,Mangaluru,High,Traced,1
+MP00115,FIR-2024-004497,Ridhi Ramesh,65,Female,2025-05-16,left home without informing,Hubballi-Dharwad,Medium,Open,0
+MP00116,FIR-2023-004648,Ekta Patla,25,Female,2025-03-07,did not return from college,Mangaluru,Low,Open,0
+MP00117,FIR-2024-004669,Thomas Nayar,37,Male,2024-10-20,last seen near bus stand,Gadag,Medium,Open,0
+MP00118,FIR-2023-004672,Sarthak Natt,,Male,2023-09-21,last seen near bus stand,Chikkamagaluru,Medium,Open,0
+MP00119,FIR-2026-004699,Gaurav Kibe,62,Male,2024-06-14,did not return from college,Bengaluru City,Medium,Closed,0
+MP00120,FIR-2023-004812,Hitesh Saxena,,Male,2025-02-19,last seen near bus stand,Ballari,High,Traced,0
+MP00121,FIR-2023-004816,Anamika Gaba,41,Female,2025-03-22,did not return from college,Yadgir,Medium,Open,0
+MP00122,FIR-2025-004826,Ojasvi Mohanty,54,Female,2025-01-27,last seen near bus stand,Belagavi,Low,Open,1
+MP00123,FIR-2023-004940,Laban Batra,62,Male,2026-05-13,left home without informing,Ramanagara,Medium,Traced,0
+MP00124,FIR-2026-004959,Janya Shankar,,Female,2024-04-24,last seen near bus stand,Vijayapura,Low,Open,2
+MP00125,FIR-2025-004974,Indali Konda,44,Female,2025-06-26,,Bengaluru City,High,Open,0
+MP00126,FIR-2025-005086,Ekta Raju,,Female,2025-04-25,did not return from college,Bengaluru City,Medium,Closed,0
+MP00127,FIR-2026-005111,Harita Oak,,Female,2024-09-23,last seen near bus stand,Hubballi-Dharwad,High,Open,0
+MP00128,FIR-2023-005168,Hemal Kalita,18,Female,2026-01-06,last seen near bus stand,Mysuru,Medium,Closed,0
+MP00129,FIR-2024-005205,Kai Mandal,44,Male,2025-02-02,did not return from college,Mysuru,Medium,Closed,0
+MP00130,FIR-2023-005320,Rishi Parikh,18,Male,2025-05-08,last seen near bus stand,Bengaluru City,Low,Traced,2
+MP00131,FIR-2024-005397,Rohan Anand,60,Male,2024-12-31,did not return from college,Belagavi,Medium,Traced,0
+MP00132,FIR-2026-005455,Rajeshri Thaman,48,Female,2023-10-23,did not return from college,Dakshina Kannada,Medium,Open,0
+MP00133,FIR-2026-005531,Nidhi Balay,22,Female,2023-10-16,did not return from college,Bidar,Medium,Open,3
+MP00134,FIR-2026-005559,Vrinda Sagar,66,Female,2026-02-26,left home without informing,Mangaluru,High,Traced,0
+MP00135,FIR-2026-005647,Indrajit Gupta,,Male,2026-04-16,left home without informing,Bengaluru City,Medium,Open,1
+MP00136,FIR-2025-005674,Thomas Gaba,57,Male,2024-07-10,,Bengaluru City,Low,Open,0
+MP00137,FIR-2024-005709,Aishani Shere,50,Female,2025-06-13,did not return from college,Bengaluru City,Medium,Traced,1
+MP00138,FIR-2026-005743,Lavanya Venkataraman,46,Female,2026-03-22,last seen near bus stand,Gadag,High,Traced,3
+MP00139,FIR-2023-005744,Lavanya Dani,60,Female,2024-02-22,did not return from college,Bidar,Low,Open,1
+MP00140,FIR-2026-005771,Jonathan Muni,47,Male,2024-04-19,last seen near bus stand,Bengaluru Rural,Medium,Open,2
+MP00141,FIR-2023-005840,Rachana Sandal,,Female,2024-07-28,left home without informing,Yadgir,Low,Open,1
+MP00142,FIR-2024-005849,Gayathri Memon,26,Female,2025-02-21,did not return from college,Mandya,Medium,Open,0
+MP00143,FIR-2024-005917,Sachi Bala,,Female,2026-01-05,last seen near bus stand,Bengaluru City,High,Traced,0
+MP00144,FIR-2026-005923,Nicholas Sani,48,Male,2024-02-18,left home without informing,Mysuru,Low,Closed,1
+MP00145,FIR-2024-005957,Janani Rajagopal,34,Female,2025-08-31,left home without informing,Belagavi,Medium,Closed,0
+MP00146,FIR-2024-006029,Ekani Batra,,Female,2024-03-04,left home without informing,Raichur,Low,Open,2
+MP00147,FIR-2023-006056,Xalak Bakshi,45,Female,2023-12-08,last seen near bus stand,Ramanagara,Medium,Traced,0
+MP00148,FIR-2026-006087,Jason Batra,18,Male,2024-02-15,left home without informing,Mandya,High,Open,0
+MP00149,FIR-2024-006089,Chakrika Kunda,50,Female,2024-01-31,last seen near bus stand,Belagavi,High,Closed,0
+MP00150,FIR-2023-006160,Frado Shroff,47,Male,2023-06-18,did not return from college,Mandya,High,Open,0
+MP00151,FIR-2023-006200,Kamala Shan,,Female,2023-07-15,did not return from college,Bengaluru City,High,Open,0
+MP00152,FIR-2026-006223,Darpan Madan,25,Male,2025-10-27,did not return from college,Kalaburagi,Low,Open,0
+MP00153,FIR-2023-006232,Zilmil Wadhwa,64,Female,2026-05-01,left home without informing,Hubballi-Dharwad,High,Traced,2
+MP00154,FIR-2025-006246,Hema Comar,27,Female,2023-07-06,left home without informing,Kalaburagi,Medium,Open,1
+MP00155,FIR-2024-006309,Yash Pingle,36,Male,2024-08-01,left home without informing,Mysuru,Low,Open,0
+MP00156,FIR-2023-006372,Madhavi Bansal,30,Female,2024-03-14,last seen near bus stand,Haveri,Medium,Traced,0
+MP00157,FIR-2025-006542,Nidra Puri,,Female,2025-12-20,left home without informing,Koppal,Medium,Open,0
+MP00158,FIR-2024-006565,Lipika Sharma,70,Female,2025-10-12,left home without informing,Mangaluru,High,Traced,0
+MP00159,FIR-2023-006576,Caleb Rama,40,Male,2026-05-15,left home without informing,Hassan,Medium,Closed,0
+MP00160,FIR-2025-006594,Pranit Banerjee,,Male,2025-12-05,,Kalaburagi,Low,Traced,0
+MP00161,FIR-2024-006613,Indira Yadav,58,Female,2025-12-14,last seen near bus stand,Yadgir,High,Closed,0
+MP00162,FIR-2025-006614,Thomas Butala,52,Male,2023-10-21,last seen near bus stand,Udupi,Medium,Closed,0
+MP00163,FIR-2024-006641,Forum Anne,41,Female,2024-12-30,left home without informing,Bengaluru City,Low,Closed,1
+MP00164,FIR-2025-006742,Ijaya Patla,22,Female,2024-03-11,left home without informing,Belagavi,Low,Traced,0
+MP00165,FIR-2024-006749,Qabil Chauhan,,Male,2023-10-22,last seen near bus stand,Bengaluru City,Medium,Open,3
+MP00166,FIR-2025-006750,Lucky Sekhon,21,Male,2023-09-05,last seen near bus stand,Mysuru,High,Closed,1
+MP00167,FIR-2023-006812,Zayyan Parekh,51,Male,2024-10-14,last seen near bus stand,Mangaluru,Low,Open,0
+MP00168,FIR-2024-006861,Hemal Gandhi,67,Female,2023-07-30,,Belagavi,High,Closed,0
+MP00169,FIR-2024-006865,Benjamin Tank,51,Male,2024-08-10,did not return from college,Bengaluru City,Medium,Closed,0
+MP00170,FIR-2024-006877,Faris Pillay,54,Male,2023-07-28,did not return from college,Hassan,High,Traced,2
+MP00171,FIR-2026-006915,Gaurika Thaman,26,Female,2024-08-06,did not return from college,Ballari,Low,Open,3
+MP00172,FIR-2024-007017,Nathaniel Ramachandran,62,Male,2025-12-05,last seen near bus stand,Bengaluru City,Medium,Open,0
+MP00173,FIR-2023-007024,Bhavya Zachariah,,Female,2024-06-29,did not return from college,Belagavi,Low,Closed,0
+MP00174,FIR-2024-007213,Rehaan Agarwal,35,Male,2025-03-14,last seen near bus stand,Bengaluru City,Low,Open,0
+MP00175,FIR-2024-007217,Eiravati Bora,65,Female,2026-05-12,last seen near bus stand,Bengaluru Rural,High,Traced,4
+MP00176,FIR-2023-007244,Samaksh Chopra,36,Male,2025-06-08,left home without informing,Bengaluru City,Medium,Closed,3
+MP00177,FIR-2023-007256,Jackson Gole,40,Male,2025-06-26,,Dakshina Kannada,Medium,Traced,0
+MP00178,FIR-2026-007275,Jalsa Garg,,Female,2023-10-18,last seen near bus stand,Chikkamagaluru,Medium,Traced,1
+MP00179,FIR-2025-007278,Indira Mallick,49,Female,2026-03-30,last seen near bus stand,Bagalkote,High,Traced,2
+MP00180,FIR-2024-007309,Frado Pandit,56,Male,2024-10-26,left home without informing,Mysuru,Low,Open,0
+MP00181,FIR-2026-007403,Ekantika Lata,18,Female,2023-07-31,last seen near bus stand,Bagalkote,Low,Open,0
+MP00182,FIR-2025-007646,Dhruv Gour,29,Male,2023-11-30,left home without informing,Ramanagara,Medium,Open,1
+MP00183,FIR-2025-007678,Barkha Mallick,49,Female,2026-02-20,last seen near bus stand,Bengaluru City,High,Open,0
+MP00184,FIR-2026-007723,Sanaya Basak,41,Female,2024-09-06,did not return from college,Bengaluru City,High,Traced,2
+MP00185,FIR-2024-007729,Girish Loyal,56,Male,2025-03-21,left home without informing,Chikkaballapura,High,Closed,0
+MP00186,FIR-2025-007746,Hemani Bahri,26,Female,2024-08-27,last seen near bus stand,Kolar,High,Traced,0
+MP00187,FIR-2026-007803,Ekta Shetty,53,Female,2023-09-28,,Bengaluru City,Medium,Traced,2
+MP00188,FIR-2026-007891,Bhavya Zacharia,30,Female,2024-07-19,last seen near bus stand,Bagalkote,Medium,Open,0
+MP00189,FIR-2025-007922,Manya Sankar,47,Female,2025-05-11,,Raichur,Medium,Closed,1
+MP00190,FIR-2023-007948,Chandani Viswanathan,39,Female,2025-02-08,last seen near bus stand,Shivamogga,Medium,Open,1
+MP00191,FIR-2026-007971,Jatin Baria,47,Male,2026-01-03,last seen near bus stand,Raichur,Medium,Open,1
+MP00192,FIR-2024-007973,Pratyush Grewal,35,Male,2026-05-29,left home without informing,Shivamogga,High,Open,1

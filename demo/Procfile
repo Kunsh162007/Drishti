@@ -1,0 +1,7 @@
+# Procfile — for platforms that use it (Heroku, Railway, Dokku, etc.).
+# The release phase regenerates + seeds the bundled SQLite DB; the web phase
+# serves the FastAPI app. Both run from the demo/ folder context:
+#   • scripts import demo.backend.* (CWD-independent, self-insert repo root)
+#   • uvicorn needs `backend.main:app` importable -> launched inside demo/
+release: python scripts/generate_data.py && python scripts/seed_db.py
+web: uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}

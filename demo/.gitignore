@@ -1,0 +1,57 @@
+# ============================================================================
+# DRISHTI demo — .gitignore
+# ----------------------------------------------------------------------------
+# We COMMIT the seed inputs (data/seed/*.csv and data/samples/*.{csv,json,
+# ndjson,geojson,xlsx}) so the demo deploys with no extra steps. We DO NOT
+# commit the compiled SQLite DB — it is regenerated + seeded at build time.
+# ============================================================================
+
+# --- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- Virtualenvs -----------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# --- Secrets / local env ---------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Compiled SQLite DB (regenerated at build; never committed) ------------
+*.db
+*.sqlite
+*.sqlite3
+data/drishti_demo.db
+
+# IMPORTANT: do NOT ignore the seed/sample data files — they are inputs.
+# These un-ignore rules guard against any broad *.csv / *.json patterns being
+# added above in the future.
+!data/seed/
+!data/seed/*.csv
+!data/samples/
+!data/samples/*.csv
+!data/samples/*.json
+!data/samples/*.ndjson
+!data/samples/*.geojson
+!data/samples/*.xlsx
+
+# --- Editor / OS noise -----------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

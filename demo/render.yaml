@@ -1,0 +1,63 @@
+# ============================================================================
+# DRISHTI — Render Blueprint (FREE tier)
+# ----------------------------------------------------------------------------
+# Deploy the demo on Render's free plan with ZERO external services:
+#   • No database to provision — the app ships with a bundled SQLite file that
+#     is (re)generated + seeded at build time from committed seed CSVs.
+#   • The assistant runs in free, deterministic, grounded "extractive" mode
+#     (LLM_PROVIDER=none) — no API key required.
+#
+# HOW TO DEPLOY
+#   1. Push this repo to GitHub (the `demo/` folder must sit at the repo root).
+#   2. Render Dashboard → New → Blueprint → connect the repo.
+#   3. Render auto-detects this file (point it at demo/render.yaml if asked).
+#   4. Click Apply. First build runs data generation + DB seed (~1-2 min).
+#
+# MODULE-PATH NOTES (important — these match the real code):
+#   • `rootDir: demo` makes Render run all commands from inside the demo/ folder,
+#     so `backend.main:app` is importable for uvicorn and `requirements.txt`
+#     resolves correctly.
+#   • The data scripts derive their paths from __file__ (ROOT = repo root, two
+#     levels up) and self-insert the repo root onto sys.path, so they import
+#     `demo.backend.*` correctly no matter which directory they're launched from.
+#     That's why `python scripts/generate_data.py` / `scripts/seed_db.py` work
+#     even with rootDir: demo.
+#   • The SQLite DB always lands at demo/data/drishti_demo.db (config derives it
+#     from the package location, not the CWD).
+# ============================================================================
+
+services:
+  - type: web
+    name: drishti-demo
+    runtime: python
+    plan: free                      # Render free tier (cold-starts after ~15 min idle)
+    rootDir: demo                    # run everything from inside the demo/ folder
+    autoDeploy: true
+
+    buildCommand: |
+      pip install -r requirements.txt
+      python scripts/generate_data.py
+      python scripts/seed_db.py
+
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: DRISHTI_MODE
+        value: demo
+      # Free, deterministic, grounded assistant — no key, no cost.
+      - key: LLM_PROVIDER
+        value: none
+      - key: LLM_API_KEY
+        value: ""
+      - key: LLM_MODEL
+        value: ""
+      # Pin a Python version Render supports for the pinned wheels.
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      # DATABASE_URL is intentionally omitted: the app falls back to the bundled
+      # SQLite file (demo/data/drishti_demo.db). To go to Postgres/PostGIS in
+      # production, set DATABASE_URL here, e.g.:
+      #   - key: DATABASE_URL
+      #     value: postgresql+psycopg://user:pass@host:5432/drishti
