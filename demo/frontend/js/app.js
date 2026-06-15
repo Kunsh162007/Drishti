@@ -30,6 +30,7 @@ const App = (() => {
     geoprofiler: () => Views.Geoprofiler,
     forecast: () => Views.Forecast,
     suspect: () => Views.Suspect,
+    advanced: () => Views.Advanced,
   };
 
   async function loadMeta() {

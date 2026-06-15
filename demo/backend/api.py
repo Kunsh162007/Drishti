@@ -794,6 +794,71 @@ def oversight_audit(limit: int = 50, db: Session = Depends(get_session)):
     return {"entries": entries, "integrity": integrity}
 
 
+# ---- Network motif detection ----------------------------------------------------------------
+@router.get("/network/motifs")
+def network_motifs(depth: int = 1, limit: int = 300, db: Session = Depends(get_session)):
+    try:
+        from .analytics import motifs as A_motifs
+    except Exception:
+        return {"triangles": [], "stars": [], "chains": [], "stats": {}, "summary": "Module unavailable."}
+    net = network(db, depth=depth, limit=limit)
+    try:
+        return A_motifs.detect_motifs(net["nodes"], net["edges"])
+    except Exception as e:
+        return {"triangles": [], "stars": [], "chains": [], "stats": {}, "summary": str(e)}
+
+
+# ---- ACO patrol optimisation ----------------------------------------------------------------
+@router.get("/patrol/aco")
+def patrol_aco(resolution: int = 8, units: int = 15, n_ants: int = 30, n_iter: int = 60,
+               db: Session = Depends(get_session)):
+    try:
+        from .analytics import aco_patrol as A_aco
+    except Exception:
+        return patrol_optimize(resolution=resolution, units=units, db=db)
+    rows = [r.as_dict() for r in db.query(Crime).all()]
+    # Re-use the patrol analytics to get scored cells
+    if A_patrol:
+        try:
+            cells_raw = A_patrol.optimize_patrol(rows, resolution, units * 3)["assignments"]
+        except Exception:
+            cells_raw = []
+    else:
+        cells_raw = []
+    # Convert to {w: risk_weight} format for ACO
+    total_w = sum(float(c.get("expected_share") or 0) for c in cells_raw) or 1.0
+    cells_for_aco = [dict(c, w=float(c.get("expected_share") or 0)) for c in cells_raw]
+    try:
+        selected = A_aco.aco_patrol(cells_for_aco, units, n_ants=n_ants, n_iter=n_iter)
+        selected = _enrich_cells(selected, rows, resolution)
+        covered = sum(float(c.get("expected_share") or 0) for c in selected)
+        return {
+            "assignments": selected,
+            "coverage_pct": round(100.0 * covered / total_w, 1),
+            "summary": f"ACO ({n_ants} ants × {n_iter} iterations) allocated {len(selected)} unit(s).",
+            "algorithm": "ACO",
+        }
+    except Exception as e:
+        return {"assignments": [], "coverage_pct": 0, "summary": str(e), "algorithm": "ACO"}
+
+
+# ---- Differential privacy hotspots ----------------------------------------------------------
+@router.get("/hotspots/dp")
+def hotspots_dp(epsilon: float = 1.0, resolution: int = 8,
+                crime_type: str = None, db: Session = Depends(get_session)):
+    try:
+        from .analytics import dp_hotspot as A_dp
+    except Exception:
+        return hotspots(db=db, resolution=resolution, crime_type=crime_type)
+    raw = hotspots(db=db, resolution=resolution, crime_type=crime_type)
+    cells = raw.get("cells", [])
+    try:
+        result = A_dp.privatise_hotspots(cells, epsilon=max(0.05, min(20.0, float(epsilon))))
+        return result
+    except Exception as e:
+        return {"cells": cells, "epsilon": epsilon, "error": str(e)}
+
+
 # ---- Geographic profiling (Rossmo CGT) -------------------------------------------------------
 @router.get("/geo-profile")
 def geo_profile(crime_type: str = None, date_from: str = None, date_to: str = None,
