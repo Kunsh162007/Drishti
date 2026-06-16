@@ -73,9 +73,17 @@ def criminal_profile(
         Behavioral profile dict.
     """
     target_lower = target_name.lower().strip()
+    _tokens = [t for t in target_lower.split() if len(t) > 1]
+
+    def _matches(p: dict) -> bool:
+        if not _tokens:
+            return False
+        name = (p.get("full_name") or "").lower()
+        norm = (p.get("normalized_name") or "").lower()
+        return all(tok in name or tok in norm for tok in _tokens)
 
     # ── Find FIRs linked to target ────────────────────────────────────────────
-    person_rows = [p for p in persons if target_lower in (p.get("full_name") or "").lower()]
+    person_rows = [p for p in persons if _matches(p)]
     if not person_rows:
         return {"found": False, "name": target_name, "firs": [], "timeline": [],
                 "risk_score": 0, "risk_label": "Unknown", "summary": "No matching person found."}

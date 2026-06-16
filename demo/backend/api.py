@@ -382,7 +382,15 @@ def network(db: Session = Depends(get_session), fir=None, person=None, depth: in
     if fir:
         firs = {fir}
     elif person:
-        firs = {p.fir_number for p in db.query(Person).filter(Person.full_name.like(f"%{person}%")).all()}
+        tokens = [t for t in person.split() if len(t) > 1]
+        if not tokens:
+            firs = set()
+        else:
+            q = db.query(Person)
+            for tok in tokens:
+                like = f"%{tok}%"
+                q = q.filter((Person.full_name.ilike(like)) | (Person.normalized_name.ilike(like)))
+            firs = {p.fir_number for p in q.all()}
     else:
         firs = {c.fir_number for c in db.query(Crime).order_by(Crime.occurred_at.desc()).limit(120).all()}
     # expand by shared persons/vehicles up to depth
@@ -949,7 +957,12 @@ def temporal(district: str = None, crime_type: str = None, db: Session = Depends
 # ---- Suspect intelligence (deep person profile) ---------------------------------------------
 @router.get("/suspect/profile")
 def suspect_profile(name: str = Query(...), db: Session = Depends(get_session)):
-    persons = db.query(Person).filter(Person.full_name.ilike(f"%{name}%")).limit(200).all()
+    tokens = [t for t in name.split() if len(t) > 1]
+    _pq = db.query(Person)
+    for _tok in tokens:
+        _like = f"%{_tok}%"
+        _pq = _pq.filter((Person.full_name.ilike(_like)) | (Person.normalized_name.ilike(_like)))
+    persons = (_pq.limit(200).all() if tokens else [])
     if not persons:
         return {"name": name, "matches": [], "firs": [], "stats": {}, "vehicles": []}
     tids = list({p.true_identity_id for p in persons if p.true_identity_id})
