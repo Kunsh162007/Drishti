@@ -39,6 +39,7 @@ services:
       python scripts/generate_data.py
       python scripts/generate_extended_data.py
       python scripts/seed_db.py
+      python seed_demo_data.py
 
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 
