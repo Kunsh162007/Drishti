@@ -30,6 +30,8 @@ const App = (() => {
     geoprofiler: () => Views.Geoprofiler,
     forecast: () => Views.Forecast,
     suspect: () => Views.Suspect,
+    correlate: () => Views.Correlate,
+    behavioral: () => Views.Behavioral,
     advanced: () => Views.Advanced,
   };
 

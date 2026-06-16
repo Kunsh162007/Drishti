@@ -990,6 +990,47 @@ def suspect_profile(name: str = Query(...), db: Session = Depends(get_session)):
     }
 
 
+# ---- Case correlation (multi-signal clustering) --------------------------------------------
+@router.get("/cases/correlate")
+def cases_correlate(crime_type: str = None, district: str = None,
+                    threshold: float = 4.0, limit: int = 500,
+                    db: Session = Depends(get_session)):
+    try:
+        from .analytics import correlate as A_corr
+    except Exception:
+        return {"clusters": [], "total_crimes": 0, "total_linked": 0,
+                "method": "unavailable", "threshold": threshold}
+    q = db.query(Crime)
+    if crime_type:
+        q = q.filter(Crime.crime_type == crime_type)
+    if district:
+        q = q.filter(Crime.district == district)
+    rows = [r.as_dict() for r in q.limit(limit).all()]
+    persons = [p.as_dict() for p in db.query(Person).limit(limit * 3).all()]
+    vehicles = [v.as_dict() for v in db.query(Vehicle).limit(limit * 2).all()]
+    try:
+        return A_corr.correlate_cases(rows, persons, vehicles,
+                                      threshold=max(1.0, min(10.0, threshold)))
+    except Exception as e:
+        return {"clusters": [], "total_crimes": len(rows), "total_linked": 0,
+                "method": "error", "threshold": threshold, "error": str(e)}
+
+
+# ---- Behavioral analytics (criminal career profile) -----------------------------------------
+@router.get("/suspect/behavior")
+def suspect_behavior(name: str = Query(...), db: Session = Depends(get_session)):
+    try:
+        from .analytics import behavioral as A_beh
+    except Exception:
+        return {"found": False, "name": name, "error": "Module unavailable."}
+    crimes_ = [r.as_dict() for r in db.query(Crime).all()]
+    persons_ = [p.as_dict() for p in db.query(Person).all()]
+    try:
+        return A_beh.criminal_profile(crimes_, persons_, name)
+    except Exception as e:
+        return {"found": False, "name": name, "error": str(e)}
+
+
 # ---- Auto-drafted, grounded intelligence briefing -------------------------------------------
 @router.get("/briefing")
 def briefing(district: str = None, db: Session = Depends(get_session)):

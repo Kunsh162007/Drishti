@@ -5,7 +5,7 @@
    3. Differential Privacy Hotspots (Laplace mechanism)
    ============================================================ */
 Views.Advanced = (() => {
-  let el, map, mapReady = false, mounted = false;
+  let el, map, mapReady = false, mounted = false, pendingAco = null;
 
   function shell() {
     return `
@@ -174,7 +174,8 @@ Views.Advanced = (() => {
   }
 
   function renderACOMap(asgn) {
-    if (!mapReady || !asgn.length) return;
+    if (!asgn.length) return;
+    if (!mapReady) { pendingAco = asgn; return; }
     const pts = { type:"FeatureCollection", features: asgn.filter(a=>a.lat&&a.lng).map(a=>({
       type:"Feature", geometry:{type:"Point",coordinates:[a.lng,a.lat]}, properties:{_w:a.aco_pheromone||1}
     }))};
@@ -227,7 +228,7 @@ Views.Advanced = (() => {
     document.getElementById("dp-run").addEventListener("click", runDP);
     // Init ACO map
     map = MapKit.createMap("aco-map-canvas", { center: [76.4, 14.9], zoom: 5.6, pitch: 0 });
-    map.on("load", () => { mapReady = true; });
+    map.on("load", () => { mapReady = true; if (pendingAco) { renderACOMap(pendingAco); pendingAco = null; } });
     // Auto-load all three on mount
     runMotifs();
     runACO();

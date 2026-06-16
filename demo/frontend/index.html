@@ -25,7 +25,7 @@
   <!-- ECharts -->
   <script src="https://unpkg.com/echarts@5.5.1/dist/echarts.min.js"></script>
 
-  <link rel="stylesheet" href="css/styles.css?v=5" />
+  <link rel="stylesheet" href="css/styles.css?v=6" />
 </head>
 <body>
   <!-- App shell -->
@@ -120,6 +120,12 @@
         <li class="nav-item" data-view="suspect" title="Suspect Intelligence">
           <span class="nav-ico">⚐</span><span class="nav-label">Suspect</span>
         </li>
+        <li class="nav-item" data-view="correlate" title="Case Correlation Engine">
+          <span class="nav-ico">⚯</span><span class="nav-label">Correlation</span>
+        </li>
+        <li class="nav-item" data-view="behavioral" title="Behavioral Analytics">
+          <span class="nav-ico">◉</span><span class="nav-label">Behavioral</span>
+        </li>
         <li class="nav-item" data-view="advanced" title="Advanced Research Features">
           <span class="nav-ico">✶</span><span class="nav-label">Advanced</span>
         </li>
@@ -149,6 +155,8 @@
       <section class="view hidden" data-view="geoprofiler" id="view-geoprofiler"></section>
       <section class="view hidden" data-view="forecast" id="view-forecast"></section>
       <section class="view hidden" data-view="suspect" id="view-suspect"></section>
+      <section class="view hidden" data-view="correlate" id="view-correlate"></section>
+      <section class="view hidden" data-view="behavioral" id="view-behavioral"></section>
       <section class="view hidden" data-view="advanced" id="view-advanced"></section>
     </main>
   </div>
@@ -190,30 +198,32 @@
   <div id="toast-host" class="toast-host" aria-live="polite"></div>
 
   <!-- JS modules -->
-  <script src="js/api.js?v=5"></script>
-  <script src="js/ui.js?v=5"></script>
+  <script src="js/api.js?v=6"></script>
+  <script src="js/ui.js?v=6"></script>
   <!-- Views registry MUST exist before the view scripts run -->
   <script>window.Views = {};</script>
-  <script src="js/mapkit.js?v=5"></script>
-  <script src="js/views/dashboard.js?v=5"></script>
-  <script src="js/views/hotspots.js?v=5"></script>
-  <script src="js/views/network.js?v=5"></script>
-  <script src="js/views/cdr.js?v=5"></script>
-  <script src="js/views/cyber.js?v=5"></script>
-  <script src="js/views/predictive.js?v=5"></script>
-  <script src="js/views/patrol.js?v=5"></script>
-  <script src="js/views/missing.js?v=5"></script>
-  <script src="js/views/investigations.js?v=5"></script>
-  <script src="js/views/assistant.js?v=5"></script>
-  <script src="js/views/oversight.js?v=5"></script>
-  <script src="js/views/myshield.js?v=5"></script>
-  <script src="js/views/ingestion.js?v=5"></script>
-  <script src="js/views/temporal.js?v=5"></script>
-  <script src="js/views/geoprofiler.js?v=5"></script>
-  <script src="js/views/forecast.js?v=5"></script>
-  <script src="js/views/suspect.js?v=5"></script>
-  <script src="js/views/advanced.js?v=5"></script>
-  <script src="js/app.js?v=5"></script>
-  <script src="js/auth.js?v=5"></script>
+  <script src="js/mapkit.js?v=6"></script>
+  <script src="js/views/dashboard.js?v=6"></script>
+  <script src="js/views/hotspots.js?v=6"></script>
+  <script src="js/views/network.js?v=6"></script>
+  <script src="js/views/cdr.js?v=6"></script>
+  <script src="js/views/cyber.js?v=6"></script>
+  <script src="js/views/predictive.js?v=6"></script>
+  <script src="js/views/patrol.js?v=6"></script>
+  <script src="js/views/missing.js?v=6"></script>
+  <script src="js/views/investigations.js?v=6"></script>
+  <script src="js/views/assistant.js?v=6"></script>
+  <script src="js/views/oversight.js?v=6"></script>
+  <script src="js/views/myshield.js?v=6"></script>
+  <script src="js/views/ingestion.js?v=6"></script>
+  <script src="js/views/temporal.js?v=6"></script>
+  <script src="js/views/geoprofiler.js?v=6"></script>
+  <script src="js/views/forecast.js?v=6"></script>
+  <script src="js/views/suspect.js?v=6"></script>
+  <script src="js/views/correlate.js?v=6"></script>
+  <script src="js/views/behavioral.js?v=6"></script>
+  <script src="js/views/advanced.js?v=6"></script>
+  <script src="js/app.js?v=6"></script>
+  <script src="js/auth.js?v=6"></script>
 </body>
 </html>
