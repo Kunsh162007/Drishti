@@ -19,11 +19,7 @@ services:
     rootDir: demo                    # run everything from inside the demo/ folder
     autoDeploy: true
 
-    buildCommand: |
-      pip install -r requirements.txt
-      python scripts/generate_data.py
-      python scripts/generate_extended_data.py
-      python scripts/seed_db.py
+    buildCommand: pip install -r requirements.txt
 
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 
