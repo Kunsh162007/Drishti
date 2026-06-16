@@ -1,4 +1,5 @@
 """DRISHTI demo entrypoint: FastAPI app serving the API (/api) and the static frontend (/)."""
+import logging
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,11 +10,26 @@ from . import config
 from .db import Base, engine
 from .api import router as api_router
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title=config.APP_TITLE, version=config.APP_VERSION)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # Create tables if they don't exist (no-op when the seeded SQLite file is present).
 Base.metadata.create_all(bind=engine)
+
+# Log DB status on startup so Render logs confirm the DB is loaded correctly.
+try:
+    from sqlalchemy import text, func
+    from .models import Crime, Person
+    with engine.connect() as _conn:
+        n_crimes = _conn.execute(text("SELECT COUNT(*) FROM crimes")).scalar()
+        n_persons = _conn.execute(text("SELECT COUNT(*) FROM persons")).scalar()
+        jm = _conn.execute(text("PRAGMA journal_mode")).scalar()
+    logger.info("DB ready: %d crimes, %d persons, journal_mode=%s", n_crimes, n_persons, jm)
+except Exception as _e:
+    logger.error("DB startup check failed: %s", _e)
 
 app.include_router(api_router)
 

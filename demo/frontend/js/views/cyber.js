@@ -263,7 +263,8 @@ Views.Cyber = (() => {
     try {
       const data = await API.get("/cyber/money-flow", { account: acct, depth });
       renderFlow(data);
-    } catch (_) {
+    } catch (err) {
+      console.error("[Cyber] trace failed:", err);
       document.getElementById("cy-flow-stats").textContent = "Could not trace this account.";
     }
   }

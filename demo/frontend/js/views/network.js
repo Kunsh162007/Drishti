@@ -161,7 +161,8 @@ Views.Network = (() => {
     try {
       const data = await API.get("/network", params);
       renderData(data);
-    } catch (_) {
+    } catch (err) {
+      console.error("[Network] build failed:", err);
       document.getElementById("net-stats").textContent = "Failed to build network.";
     }
   }

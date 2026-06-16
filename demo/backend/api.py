@@ -5,12 +5,15 @@ degrades to a simple built-in fallback so the app always boots and never crashes
 """
 import io
 import json
+import logging
 import math
 import statistics
 from collections import Counter, defaultdict
 
 import pandas as pd
 from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPException
+
+logger = logging.getLogger(__name__)
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, and_
 from sqlalchemy.orm import Session
@@ -163,6 +166,41 @@ def _enrich_cells(cells, rows, resolution):
 def health(db: Session = Depends(get_session)):
     return {"status": "ok", "mode": config.MODE, "db": config.DATABASE_URL.split("://")[0],
             "records": db.query(func.count(Crime.id)).scalar() or 0}
+
+
+@router.get("/test")
+def api_test(db: Session = Depends(get_session)):
+    """Diagnostic endpoint — hit /api/test in browser to verify each subsystem."""
+    import traceback, sys, platform
+    results = {}
+    try:
+        results["crimes"] = db.query(func.count(Crime.id)).scalar()
+        results["persons"] = db.query(func.count(Person.id)).scalar()
+        results["transactions"] = db.query(func.count(Transaction.id)).scalar()
+        results["accounts"] = db.query(func.count(Account.id)).scalar()
+        results["db_ok"] = True
+    except Exception as e:
+        results["db_ok"] = False
+        results["db_error"] = traceback.format_exc()
+    try:
+        suresh = db.query(Person).filter(Person.full_name.ilike("%Suresh%")).limit(3).all()
+        results["suresh_count"] = len(suresh)
+        results["suresh_names"] = [p.full_name for p in suresh]
+    except Exception as e:
+        results["suresh_error"] = str(e)
+    try:
+        cyber_crimes = db.query(func.count(Crime.id)).filter(Crime.crime_category == "Cybercrime").scalar()
+        results["cyber_crimes"] = cyber_crimes
+    except Exception as e:
+        results["cyber_error"] = str(e)
+    results["python"] = sys.version
+    results["platform"] = platform.platform()
+    results["analytics"] = {
+        "cyber": A_cyber is not None,
+        "hotspots": A_hotspots is not None,
+        "cdr": A_cdr is not None,
+    }
+    return results
 
 
 @router.get("/meta")
@@ -378,6 +416,14 @@ def anomalies(db: Session = Depends(get_session), limit: int = 50):
 # ---- network / ER / MO ----------------------------------------------------------------------
 @router.get("/network")
 def network(db: Session = Depends(get_session), fir=None, person=None, depth: int = 1, limit: int = 400):
+    try:
+        return _network_impl(db, fir=fir, person=person, depth=depth, limit=limit)
+    except Exception:
+        logger.exception("Error in /network fir=%s person=%s depth=%s", fir, person, depth)
+        raise
+
+
+def _network_impl(db, fir=None, person=None, depth=1, limit=400):
     # seed firs
     if fir:
         firs = {fir}
@@ -394,12 +440,15 @@ def network(db: Session = Depends(get_session), fir=None, person=None, depth: in
     else:
         firs = {c.fir_number for c in db.query(Crime).order_by(Crime.occurred_at.desc()).limit(120).all()}
     # expand by shared persons/vehicles up to depth
-    seen_firs = set(firs)
+    seen_firs = {f for f in firs if f is not None}
     for _ in range(max(0, depth)):
+        if not seen_firs:
+            break
         persons = db.query(Person).filter(Person.fir_number.in_(seen_firs)).all()
-        ids = {p.true_identity_id for p in persons}
-        more = db.query(Person).filter(Person.true_identity_id.in_(ids)).all()
-        seen_firs |= {p.fir_number for p in more}
+        ids = {p.true_identity_id for p in persons if p.true_identity_id is not None}
+        if ids:
+            more = db.query(Person).filter(Person.true_identity_id.in_(ids)).all()
+            seen_firs |= {p.fir_number for p in more if p.fir_number is not None}
         if len(seen_firs) > limit:
             break
     seen_firs = set(list(seen_firs)[:limit])
@@ -429,7 +478,7 @@ def network(db: Session = Depends(get_session), fir=None, person=None, depth: in
 
 @router.get("/network/communities")
 def communities(db: Session = Depends(get_session)):
-    net = network(db)  # default ego set
+    net = _network_impl(db)  # default ego set
     if A_comm:
         try:
             return {"communities": A_comm.detect_communities(net["nodes"], net["edges"])}
@@ -705,7 +754,11 @@ def cdr_tower_dump(tower: str = Query(...), start: str = None, end: str = None,
 # ---- Cybercrime / financial fraud -----------------------------------------------------------
 @router.get("/cyber/overview")
 def cyber_overview(db: Session = Depends(get_session)):
-    crimes = [r.as_dict() for r in db.query(Crime).filter(Crime.crime_category == "Cybercrime").all()]
+    try:
+        crimes = [r.as_dict() for r in db.query(Crime).filter(Crime.crime_category == "Cybercrime").all()]
+    except Exception:
+        logger.exception("cyber_overview: DB query failed")
+        raise
     if A_cyber:
         try:
             result = A_cyber.cyber_overview(crimes)
@@ -714,10 +767,10 @@ def cyber_overview(db: Session = Depends(get_session)):
                 txns = [r.as_dict() for r in db.query(Transaction).all()]
                 result.setdefault("kpis", {})["mule_accounts"] = len(A_cyber.detect_mules(accounts, txns, limit=10000))
             except Exception:
-                pass
+                logger.exception("cyber_overview: mule augmentation failed")
             return result
         except Exception:
-            pass
+            logger.exception("cyber_overview: A_cyber.cyber_overview failed")
     return {"kpis": {"total_cases": len(crimes), "total_loss": 0, "mule_accounts": 0, "recovery_rate": 0.0},
             "by_type": [], "trend": [], "top_districts": []}
 
