@@ -54,8 +54,12 @@ Views.Network = (() => {
 
   function ensureSigma() {
     if (renderer) return;
+    if (typeof DGraph !== "function") throw new Error("graphology not loaded — hard-refresh (Ctrl+Shift+R)");
+    if (typeof Sigma !== "function") throw new Error("sigma.js not loaded — hard-refresh (Ctrl+Shift+R)");
+    const container = document.getElementById("sigma-canvas");
+    if (!container) throw new Error("sigma-canvas element missing");
     graph = new DGraph({ multi: true, type: "directed" });
-    renderer = new Sigma(graph, document.getElementById("sigma-canvas"), {
+    renderer = new Sigma(graph, container, {
       defaultEdgeColor: "rgba(230,237,245,.14)",
       labelColor: { color: "#E6EDF5" },
       labelSize: 12,
@@ -163,7 +167,7 @@ Views.Network = (() => {
       renderData(data);
     } catch (err) {
       console.error("[Network] build failed:", err);
-      document.getElementById("net-stats").textContent = "Failed to build network.";
+      document.getElementById("net-stats").textContent = "Error: " + (err.message || err);
     }
   }
 
