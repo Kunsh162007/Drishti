@@ -1,0 +1,194 @@
+Feature-by-Feature Test Script
+
+1. Command Dashboard
+
+What to show: Auto-loads on login. Shows KPIs (8034 crimes), donut chart by category, top districts bar chart, hourly activity, monthly trend, and the AI briefing.
+Video step: Click "Generate briefing" — shows auto-written intelligence summary with FIR citations.
+
+---
+2. Hotspots Map
+
+What to show: 3D hex extrusion map of Bengaluru.
+Filter: District = Bengaluru City, Crime type = Vehicle Theft
+What appears: Koramangala hex spikes — 8 thefts in one cell (DEMO-FIR-040 through 047). Click the hex to see the detail panel.
+
+---
+3. Network Analysis
+
+What to show: The Naik Crime Ring triangle.
+- Search: Suresh Naik → Search by: Person → Depth: 2 hops → Build graph
+- You see: Suresh-Ramesh-Ganesh forming a triangle (3-clique), connected to 5 FIRs
+- Click "Detect communities" — the ring forms its own community
+- Click any node to see metadata panel
+
+---
+4. CDR Analysis
+
+What to show: Call network of the Naik Ring.
+- Phone: 9900001111 (Suresh Naik) → Build network
+- You see: 9900001111 (Suresh) ↔ 9900002222 (Ramesh) ↔ 9900003333 (Ganesh) ↔ 9900004444 (Handler)
+- The handler (9900004444) is in North Bengaluru (Hebbal) — different area = command node
+- Shows call frequency before each crime date
+
+---
+5. Cyber / Money Flow Explorer
+
+What to show: The 3-hop fraud money chain.
+- Account: ACC-DEMO-VICTIM (Meera Iyer) → Trace account
+- You see: Meera Iyer → Farhan Khan (mule) → Sonu Prasad (mule) → Rajesh T. (cash-out)
+- Rs 4,85,000 moves through 3 hops in 3 hours
+- KPIs show: 3 Cyber FIRs, Rs 16,10,000 total loss, 3 mule accounts
+- FIR: DEMO-FIR-030
+
+---
+6. Predictive & Anomaly
+
+What to show: Koramangala high-risk hex + anomaly flags.
+- The Koramangala Vehicle Theft cluster scores highest risk
+- Anomaly table flags the 8-theft burst as a statistical outlier
+
+---
+7. Patrol Planning
+
+What to show: Patrol units assigned to high-risk hexes.
+- Click "Optimise deployment" → Koramangala gets top priority
+- Map shows gold dots on the hotspot zones
+- Go to Advanced → ACO Patrol to compare with ant-colony optimised version
+
+---
+8. Missing Persons
+
+What to show: High-risk open case.
+- Filter: Risk tier = High, Status = Open
+- You see: Kavya Sharma, 16F, Ulsoor, missing since 2026-05-10
+- Risk tier = High (minor, phone off)
+- Also: Gopal Iyengar, 72M — repeat_count = 2 (third disappearance)
+
+---
+9. Investigations → Entity Resolution
+
+What to show: Three aliases auto-merged.
+- Click Run (threshold 0.82)
+- Find pair: Ravi Kumar ↔ R. Kumar ↔ Ravindra K. — all same phone 9845001111, same district Mysuru → flagged for merge
+- Badge: "auto" for phone match, "review" for name fuzzy match
+
+---
+10. Investigations → MO Linkage
+
+What to show: Crimes sharing modus operandi.
+- FIR: DEMO-FIR-001 → Top K: 10 → Link
+- Returns DEMO-FIR-002, 003, 005 (all share "knife, motorcycle, Koramangala" MO terms)
+- Shows how cases get connected even without a named suspect
+
+---
+11. Investigations → NLP Extract
+
+What to show: Structured entities pulled from narrative.
+- FIR: DEMO-FIR-030 → Extract
+- Returns: Vehicles: none, Phones: none, Weapons: none, Amounts: Rs 4,85,000, Locations: SBI, Methods: KYC call, OTP, IMPS transfers
+
+---
+12. Temporal Analysis
+
+What to show: Crime timing patterns.
+- District: Bengaluru City, Crime type: Vehicle Theft
+- Day×Hour heatmap shows all 8 hotspot thefts cluster at 0–3AM Monday/Thursday
+- Peak hour: 1AM, Night crime %: high
+
+---
+13. Geographic Profiling (Rossmo CGT)
+
+What to show: Offender anchor point prediction.
+- Crime type: Dacoity → Build Profile
+- 6 dacoity FIRs spread across North Bengaluru (Hebbal, Yelahanka, Bagalur)
+- Gold anchor point lands near Hebbal — that's where the gang likely lives/operates from
+- Heatmap shows probability surface
+
+---
+14. Crime Forecasting
+
+What to show: Next-month prediction + near-repeat alerts.
+- Crime type: Vehicle Theft
+- Forecast chart: solid blue line (history) → dashed gold (3-month forecast) with 95% CI band
+- Near-repeat alert table shows: all 8 DEMO-FIR-040–047 flagged as near-repeats of each other
+- KPI: trend direction ↑ (escalating)
+
+---
+15. Suspect Intelligence
+
+What to show: Full suspect profile with FIR history and charts.
+- Search: Suresh Naik
+- Shows: 5 FIRs, crime type pie (Robbery, Vehicle Theft, Chain Snatching, Extortion), top co-accused = Ramesh Naik + Ganesh Naik, crime location heatmap in Koramangala
+
+---
+16. Behavioral Analytics
+
+What to show: Escalating criminal career with risk score.
+- Search: Arjun Sharma
+- Timeline: 7 FIRs from 2023 to 2026
+- Severity: 1 → 1 → 3 → 3 → 4 → 5 → 5 (clear escalation)
+- Weapons: none → none → iron rod → knife → knife → knife → firearm
+- Risk score: ~75 (High) — all 6 factor bars visible
+- Monthly chart shows increasing frequency in 2025–2026
+
+---
+17. Case Correlation Engine
+
+What to show: Auto-grouped related FIRs.
+- Crime type: Vehicle Theft, Threshold: 4 → Correlate
+- Cluster 1: 8 Koramangala theft FIRs (same hex + same MO + same time window)
+- Cluster 2: Naik Ring FIRs grouped (shared persons + spatial + weapon)
+- Cluster 3: Cyber FIRs grouped (shared accounts + same MO)
+
+---
+18. Advanced → Motif Detection
+
+What to show: Crime ring auto-detected mathematically.
+- Click "Detect motifs"
+- Triangles panel: Suresh Naik + Ramesh Naik + Ganesh Naik appear as top triangle (score ~9)
+- Stars panel: Suresh Naik as hub node (highest degree)
+- Stats: triangle_count ≥ 1, hub_count ≥ 1
+
+---
+19. Advanced → DP Hotspots
+
+What to show: Privacy-preserving public release.
+- Set ε = 0.1 (very strong) → Apply DP
+- Table shows true counts vs noisy DP counts — large difference (strong privacy)
+- Switch to ε = 5.0 — DP counts nearly match true counts
+- Privacy guarantee text updates automatically
+
+---
+20. Data & Ingestion (live demo)
+
+What to show: Upload new data, everything updates.
+- Drag-drop demo/data/samples/SHOWCASE_upload.csv into the dropzone
+- Result: 8 inserted, 0 skipped, 0 errors
+- Go back to Hotspots — Koramangala spike is even taller (now 9 thefts)
+- Go to Correlation — clusters updated automatically
+
+---
+Quick-Reference Cheat Sheet
+
+┌──────────────────────┬────────────────────────────────────────────────┐
+│       Feature        │                     Input                      │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ CDR network          │ Phone 9900001111                               │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ Money flow           │ Account ACC-DEMO-VICTIM                        │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ Behavioral           │ Name Arjun Sharma                              │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ Suspect              │ Name Suresh Naik                               │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ NLP extract          │ FIR DEMO-FIR-030                               │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ MO linkage           │ FIR DEMO-FIR-001                               │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ Geo profile          │ Crime type Dacoity                             │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ Forecast/Near-repeat │ Crime type Vehicle Theft                       │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ Entity resolution    │ Run at threshold 0.82, find Ravi Kumar aliases │
+├──────────────────────┼────────────────────────────────────────────────┤
+│ Upload               │ demo/data/samples/SHOWCASE_upload.csv          │
