@@ -231,14 +231,18 @@ Views.Cyber = (() => {
     }
     const deg = {};
     edges.forEach((e) => { deg[e.source] = (deg[e.source] || 0) + 1; deg[e.target] = (deg[e.target] || 0) + 1; });
-    nodes.forEach((n) => {
+    const R = Math.max(2, Math.sqrt(nodes.length)) * 4;
+    nodes.forEach((n, i) => {
       if (graph.hasNode(n.id)) return;
       const meta = n.meta || {};
       const isMule = meta.is_mule || n.type === "mule";
       const color = isMule ? TYPE_COLOR.mule : TYPE_COLOR.account;
       const d = deg[n.id] || 1;
+      const ang = (i / Math.max(1, nodes.length)) * Math.PI * 2;
       graph.addNode(n.id, {
         label: n.label || n.id,
+        x: Math.cos(ang) * R,
+        y: Math.sin(ang) * R,
         size: Math.min(22, 5 + Math.sqrt(d) * 2.4),
         color, baseColor: color, ntype: isMule ? "mule" : "account", meta,
       });

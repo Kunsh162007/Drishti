@@ -102,11 +102,16 @@ Views.Network = (() => {
     // degree
     const deg = {};
     edges.forEach((e) => { deg[e.source] = (deg[e.source] || 0) + 1; deg[e.target] = (deg[e.target] || 0) + 1; });
-    nodes.forEach((n) => {
+    // Sigma v3 requires x,y at addNode time — seed circular positions immediately.
+    const R = Math.max(2, Math.sqrt(nodes.length)) * 4;
+    nodes.forEach((n, i) => {
       if (graph.hasNode(n.id)) return;
       const d = deg[n.id] || 1;
+      const ang = (i / Math.max(1, nodes.length)) * Math.PI * 2;
       graph.addNode(n.id, {
         label: n.label || n.id,
+        x: Math.cos(ang) * R,
+        y: Math.sin(ang) * R,
         size: Math.min(22, 4 + Math.sqrt(d) * 2.4),
         color: TYPE_COLOR[n.type] || "#8794a6",
         ntype: n.type, meta: n.meta || {}, degree: d, baseColor: TYPE_COLOR[n.type] || "#8794a6",

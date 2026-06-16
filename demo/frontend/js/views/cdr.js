@@ -196,13 +196,17 @@ Views.CDR = (() => {
     if (!nodes.length) { stats.textContent = "No call network found."; renderer.refresh(); return; }
     const deg = {};
     edges.forEach((e) => { deg[e.source] = (deg[e.source] || 0) + 1; deg[e.target] = (deg[e.target] || 0) + 1; });
-    nodes.forEach((n) => {
+    const R = Math.max(2, Math.sqrt(nodes.length)) * 4;
+    nodes.forEach((n, i) => {
       if (graph.hasNode(n.id)) return;
       const isTarget = n.id === `phone:${target}` || (n.meta && n.meta.is_target);
       const color = isTarget ? TYPE_COLOR.target : TYPE_COLOR.phone;
       const d = deg[n.id] || 1;
+      const ang = (i / Math.max(1, nodes.length)) * Math.PI * 2;
       graph.addNode(n.id, {
         label: n.label || n.id,
+        x: Math.cos(ang) * R,
+        y: Math.sin(ang) * R,
         size: Math.min(22, (isTarget ? 9 : 4) + Math.sqrt(d) * 2.2),
         color, baseColor: color, ntype: "phone", meta: n.meta || {},
       });
