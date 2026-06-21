@@ -55,6 +55,11 @@ async def audit_middleware(request, call_next):
     return response
 
 
+@app.get("/ping")
+def ping():
+    return {"ok": True}
+
+
 @app.get("/api")
 def api_root():
     return {"name": config.APP_TITLE, "version": config.APP_VERSION, "mode": config.MODE,
