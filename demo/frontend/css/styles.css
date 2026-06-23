@@ -431,3 +431,37 @@ table.tbl tr:hover td{background:rgba(230,237,245,.03)}
 .loc-pop b{ color:var(--gold-soft,#e2c25a); }
 .loc-pop .lp-row{ display:flex; justify-content:space-between; gap:14px; margin:2px 0; }
 .loc-pop .lp-fir{ font-family:monospace; font-size:10.5px; color:#9fb0c6; }
+
+/* ============================================================
+   Responsive — tablet & mobile
+   ============================================================ */
+@media(max-width:900px){
+  :root{ --sidebar-w:72px; }
+  .view{ padding:18px 16px 28px; }
+  .view-head{ gap:12px; }
+  .topbar{ padding:0 14px; gap:12px; }
+  .map-controls{ max-width:calc(100% - 32px); }
+  .map-side, .net-side{ width:230px; }
+}
+@media(max-width:640px){
+  :root{ --sidebar-w:60px; --topbar-h:52px; }
+  .view{ padding:14px 12px 26px; }
+  .brand-text{ display:none; }            /* keep logo only, free up width */
+  .brand{ justify-content:center; padding:0 6px; }
+  .topbar-meta{ font-size:11px; gap:6px; }
+  .pill-mode{ display:none; }
+  .nav-label{ font-size:8px; }
+  .nav-ico{ font-size:16px; }
+  .view-title{ font-size:18px; }
+  .kpi-value{ font-size:24px; }
+  .chart{ height:240px; }
+  /* map overlay panels become bottom sheets so they don't cover the map */
+  .map-side, .net-side{
+    position:absolute; left:12px; right:12px; bottom:12px; top:auto;
+    width:auto; max-height:42%;
+  }
+  .map-controls{ flex-direction:column; }
+  .chat-shell{ height:calc(100vh - var(--topbar-h) - 28px); }
+  .msg{ max-width:94%; }
+  .toast-host{ left:12px; right:12px; bottom:12px; max-width:none; }
+}
