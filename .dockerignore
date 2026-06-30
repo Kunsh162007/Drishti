@@ -1,0 +1,12 @@
+# Keep the Docker build context small & fast. The image only needs demo/.
+.git
+.gitignore
+demo_submission
+production
+catalyst
+*.pptx
+*.pdf
+*.mp4
+test.txt
+**/__pycache__
+**/*.pyc

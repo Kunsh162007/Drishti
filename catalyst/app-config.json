@@ -1,0 +1,24 @@
+{
+  "_comment": "Catalyst AppSail app config for DRISHTI (demo tier). Docker stack = this image is built from catalyst/Dockerfile. Replace placeholders before `catalyst deploy`. AppSail injects the listen port via X_ZOHO_CATALYST_LISTEN_PORT.",
+  "name": "drishti",
+  "stack": "docker",
+  "dockerfile": "catalyst/Dockerfile",
+  "context": ".",
+  "command": "uvicorn backend.main:app --host 0.0.0.0 --port ${X_ZOHO_CATALYST_LISTEN_PORT}",
+  "memory": 512,
+  "instances": { "min": 1, "max": 1 },
+  "health_check": { "path": "/api/health", "port_from_env": "X_ZOHO_CATALYST_LISTEN_PORT" },
+  "env_variables": {
+    "DRISHTI_MODE": "demo",
+    "LLM_PROVIDER": "none",
+    "LLM_API_KEY": "",
+    "LLM_MODEL": ""
+  },
+  "_production_overrides": {
+    "_comment": "For the sovereign/production tier, switch these via Catalyst env config (no code change). DATABASE_URL points at Catalyst Data Store / managed Postgres; LLM served via Catalyst QuickML.",
+    "DRISHTI_MODE": "production",
+    "DATABASE_URL": "{{CATALYST_DATA_STORE_OR_POSTGRES_URL}}",
+    "LLM_PROVIDER": "quickml",
+    "LLM_MODEL": "{{QUICKML_MODEL_ID}}"
+  }
+}

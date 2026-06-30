@@ -1,0 +1,15 @@
+{
+  "_comment": "Catalyst project descriptor (template). Run `catalyst init` in the repo to generate the real file with your project_id/project_name, or paste those values here. `catalyst deploy` reads this to know which components to push — for DRISHTI it's a single AppSail app plus the static frontend on Web Client Hosting.",
+  "project_name": "DRISHTI",
+  "project_id": "{{CATALYST_PROJECT_ID}}",
+  "appsail": [
+    {
+      "name": "drishti",
+      "config": "catalyst/app-config.json"
+    }
+  ],
+  "client": {
+    "_comment": "Optional: serve demo/frontend on Catalyst Web Client Hosting (Slate) instead of letting FastAPI StaticFiles serve it. If you keep FastAPI serving the frontend (current setup), you can omit this block.",
+    "source": "demo/frontend"
+  }
+}
