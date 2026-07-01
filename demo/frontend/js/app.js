@@ -22,6 +22,7 @@ const App = (() => {
     patrol: () => Views.Patrol,
     missing: () => Views.Missing,
     investigations: () => Views.Investigations,
+    registry: () => Views.Registry,
     assistant: () => Views.Assistant,
     oversight: () => Views.Oversight,
     myshield: () => Views.MyShield,

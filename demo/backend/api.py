@@ -1110,3 +1110,127 @@ def briefing(district: str = None, db: Session = Depends(get_session)):
         except Exception:
             pass
     return {"generated_at": "", "headline": "Briefing unavailable", "sections": []}
+
+
+# ============================================================================================
+# KSP FIR-schema analytics — served from the official CCTNS-aligned normalized tables
+# (CaseMaster / ActSectionAssociation / Court / Employee / Unit ...). These prove the ER
+# schema is not just present but queryable end-to-end. All read-only; degrade to empty if the
+# KSP tables haven't been built yet (build_ksp_schema.py).
+# ============================================================================================
+from sqlalchemy import text as _sql
+
+
+def _ksp(sql, params=None):
+    """Run raw SQL against the KSP normalized tables; return list[dict]. Empty on any error."""
+    try:
+        with engine.connect() as c:
+            res = c.execute(_sql(sql), params or {})
+            cols = list(res.keys())
+            return [dict(zip(cols, row)) for row in res.fetchall()]
+    except Exception as e:
+        logger.warning("KSP query failed: %s", e)
+        return []
+
+
+@router.get("/ksp/legal")
+def ksp_legal(db: Session = Depends(get_session)):
+    """Act & Section breakdown from ActSectionAssociation (the charges applied to each FIR)."""
+    by_act = _ksp("""
+        SELECT COALESCE(a.ShortName, asa.ActID) AS name,
+               COALESCE(a.ActDescription, asa.ActID) AS full_name,
+               COUNT(*) AS value
+        FROM ActSectionAssociation asa
+        LEFT JOIN Act a ON a.ActCode = asa.ActID
+        GROUP BY name, full_name ORDER BY value DESC""")
+    by_section = _ksp("""
+        SELECT asa.ActID AS act, asa.SectionID AS section,
+               COALESCE(s.SectionDescription, '') AS description,
+               COUNT(*) AS value
+        FROM ActSectionAssociation asa
+        LEFT JOIN Section s ON s.ActCode = asa.ActID AND s.SectionCode = asa.SectionID
+        GROUP BY asa.ActID, asa.SectionID, description
+        ORDER BY value DESC LIMIT 15""")
+    tot = sum(r["value"] for r in by_act)
+    return {
+        "kpis": {
+            "total_charges": tot,
+            "distinct_acts": len(by_act),
+            "distinct_sections": len(_ksp("SELECT DISTINCT ActID, SectionID FROM ActSectionAssociation")),
+            "top_act": (by_act[0]["name"] if by_act else "—"),
+        },
+        "by_act": by_act,
+        "by_section": by_section,
+    }
+
+
+@router.get("/ksp/court-pendency")
+def ksp_court_pendency(db: Session = Depends(get_session)):
+    """Case-status funnel and court-wise pendency vs disposal from CaseMaster + Court."""
+    by_status = _ksp("""
+        SELECT COALESCE(sm.CaseStatusName,'Unknown') AS name, COUNT(*) AS value
+        FROM CaseMaster cm LEFT JOIN CaseStatusMaster sm ON sm.CaseStatusID = cm.CaseStatusID
+        GROUP BY name ORDER BY value DESC""")
+    disposed_set = ("Charge Sheeted", "Closed")
+    by_court = _ksp("""
+        SELECT co.CourtName AS name,
+               SUM(CASE WHEN sm.CaseStatusName IN ('Charge Sheeted','Closed') THEN 1 ELSE 0 END) AS disposed,
+               SUM(CASE WHEN sm.CaseStatusName NOT IN ('Charge Sheeted','Closed') OR sm.CaseStatusName IS NULL THEN 1 ELSE 0 END) AS pending,
+               COUNT(*) AS total
+        FROM CaseMaster cm
+        LEFT JOIN Court co ON co.CourtID = cm.CourtID
+        LEFT JOIN CaseStatusMaster sm ON sm.CaseStatusID = cm.CaseStatusID
+        WHERE co.CourtName IS NOT NULL
+        GROUP BY co.CourtName ORDER BY total DESC LIMIT 15""")
+    total = sum(r["value"] for r in by_status)
+    disposed = sum(r["value"] for r in by_status if r["name"] in disposed_set)
+    chargesheets = _ksp("SELECT COUNT(*) AS n FROM ChargesheetDetails")
+    return {
+        "kpis": {
+            "total_cases": total,
+            "pending": total - disposed,
+            "disposed": disposed,
+            "disposal_rate": round(100 * disposed / total, 1) if total else 0,
+            "chargesheets_filed": (chargesheets[0]["n"] if chargesheets else 0),
+        },
+        "by_status": by_status,
+        "by_court": by_court,
+    }
+
+
+@router.get("/ksp/officer-workload")
+def ksp_officer_workload(db: Session = Depends(get_session)):
+    """Per-officer (registering officer) and per-station caseload from Employee + Unit + CaseMaster."""
+    by_officer = _ksp("""
+        SELECT e.FirstName AS name, r.RankName AS rank, u.UnitName AS station,
+               COUNT(*) AS cases,
+               SUM(CASE WHEN sm.CaseStatusName IN ('Charge Sheeted','Closed') THEN 1 ELSE 0 END) AS disposed
+        FROM CaseMaster cm
+        JOIN Employee e ON e.EmployeeID = cm.PolicePersonID
+        LEFT JOIN Rank r ON r.RankID = e.RankID
+        LEFT JOIN Unit u ON u.UnitID = e.UnitID
+        LEFT JOIN CaseStatusMaster sm ON sm.CaseStatusID = cm.CaseStatusID
+        GROUP BY e.EmployeeID ORDER BY cases DESC LIMIT 15""")
+    by_station = _ksp("""
+        SELECT u.UnitName AS name, d.DistrictName AS district, COUNT(*) AS value
+        FROM CaseMaster cm
+        JOIN Unit u ON u.UnitID = cm.PoliceStationID
+        LEFT JOIN District d ON d.DistrictID = u.DistrictID
+        GROUP BY u.UnitID ORDER BY value DESC LIMIT 15""")
+    officers = _ksp("SELECT COUNT(DISTINCT PolicePersonID) AS n FROM CaseMaster WHERE PolicePersonID IS NOT NULL")
+    stations = _ksp("SELECT COUNT(DISTINCT PoliceStationID) AS n FROM CaseMaster WHERE PoliceStationID IS NOT NULL")
+    total = _ksp("SELECT COUNT(*) AS n FROM CaseMaster")
+    n_off = officers[0]["n"] if officers else 0
+    n_tot = total[0]["n"] if total else 0
+    for o in by_officer:
+        o["clearance"] = round(100 * (o.get("disposed") or 0) / o["cases"], 1) if o["cases"] else 0
+    return {
+        "kpis": {
+            "officers": n_off,
+            "stations": (stations[0]["n"] if stations else 0),
+            "avg_caseload": round(n_tot / n_off, 1) if n_off else 0,
+            "busiest_station": (by_station[0]["name"] if by_station else "—"),
+        },
+        "by_officer": by_officer,
+        "by_station": by_station,
+    }

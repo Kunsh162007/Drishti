@@ -30,6 +30,10 @@ ENV/
 .env.*
 !.env.example
 
+# --- SQLite transient WAL/SHM sidecars (never commit) ----------------------
+*.db-wal
+*.db-shm
+
 # --- SQLite DB (committed as pre-built; production DBs never committed) ----
 *.sqlite
 *.sqlite3
