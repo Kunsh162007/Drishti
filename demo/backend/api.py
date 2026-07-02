@@ -475,6 +475,12 @@ def risk(db: Session = Depends(get_session), resolution: int = 8):
 @router.get("/anomalies")
 @cached(600)
 def anomalies(db: Session = Depends(get_session), limit: int = 50):
+    # Serve the precomputed top-50 anomalies (sliced to `limit`) for the common
+    # case — instant, and covers /briefing's internal limit=10 call too.
+    if limit <= 50:
+        pc = _precomp("anomalies")
+        if pc is not None:
+            return {"items": (pc.get("items") or [])[:limit]}
     # Cap the working set (recent 6k) so this stays light on the free-tier
     # instance — loading all 25k rows OOM-crashed it (and cascaded to /briefing,
     # which calls this internally, returning empty responses).
