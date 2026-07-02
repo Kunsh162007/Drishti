@@ -585,7 +585,8 @@ def chat(payload: dict, db: Session = Depends(get_session)):
     msg = (payload or {}).get("message", "")
     filt = assistant.parse_intent(msg)
     rows = _dicts(_filtered(db, district=filt.get("district"), crime_type=filt.get("crime_type"),
-                            date_from=filt.get("date_from")).limit(800).all())
+                            category=filt.get("category"), date_from=filt.get("date_from"),
+                            date_to=filt.get("date_to"), q=filt.get("q")).limit(800).all())
     if filt.get("hour_min") is not None:
         rows = [r for r in rows if (r["hour"] or 0) >= filt["hour_min"]]
     return assistant.answer(msg, rows, filt)
@@ -1099,17 +1100,25 @@ def suspect_behavior(name: str = Query(...), db: Session = Depends(get_session))
 
 # ---- Auto-drafted, grounded intelligence briefing -------------------------------------------
 @router.get("/briefing")
-def briefing(district: str = None, db: Session = Depends(get_session)):
+def briefing(district: str = None, limit: int = 400, db: Session = Depends(get_session)):
+    """Grounded briefing = a GENERAL situational summary (sections) PLUS a
+    per-FIR brief for every FIR in scope, each expandable in the UI."""
     s = stats(db, district=district)
     hs = hotspots(db, resolution=8).get("cells", [])[:20]
     em = emerging(db).get("cells", [])
     an = anomalies(db, limit=10).get("items", [])
+    lim = max(1, min(1000, int(limit or 400)))
+    scope_q = _filtered(db, district=district)
+    real_total = scope_q.count()
+    crimes = _dicts(scope_q.order_by(Crime.occurred_at.desc()).limit(lim).all())
     if A_briefing:
         try:
-            return A_briefing.generate_briefing(s, hs, em, an, district)
-        except Exception:
-            pass
-    return {"generated_at": "", "headline": "Briefing unavailable", "sections": []}
+            out = A_briefing.generate_briefing(s, hs, em, an, district)
+            out["fir_briefs"] = A_briefing.per_fir_briefs(crimes, limit=lim, total=real_total)
+            return out
+        except Exception as e:
+            logger.warning("briefing failed: %s", e)
+    return {"generated_at": "", "headline": "Briefing unavailable", "sections": [], "fir_briefs": {}}
 
 
 # ============================================================================================

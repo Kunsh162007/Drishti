@@ -135,6 +135,63 @@ def generate_briefing(stats: dict, hotspots: list[dict], emerging: list[dict],
     }
 
 
+def _short(text, n=220):
+    text = (text or "").strip()
+    return text if len(text) <= n else text[: n - 1].rstrip() + "…"
+
+
+def fir_brief(row: dict) -> dict:
+    """One grounded brief for a single FIR — a headline summary plus the
+    structured detail an officer expands to read. Every field is copied from
+    the source record; nothing is inferred or invented."""
+    row = row or {}
+    fir = row.get("fir_number") or "(unknown FIR)"
+    ctype = row.get("crime_type") or "Unclassified"
+    station = row.get("police_station") or "—"
+    district = row.get("district") or "—"
+    when = (row.get("occurred_at") or "")[:10] or "date n/a"
+    status = row.get("status") or "—"
+
+    summary = f"{ctype} · {station}, {district} · {when} · {status}"
+
+    facts = []
+    if row.get("severity") is not None:
+        facts.append(f"severity {row['severity']}")
+    if row.get("victim_count") is not None:
+        facts.append(f"{row['victim_count']} victim(s)")
+    if row.get("accused_count") is not None:
+        facts.append(f"{row['accused_count']} accused")
+    if row.get("property_value_inr"):
+        facts.append(f"₹{row['property_value_inr']:,} property value")
+    if row.get("weapon_used"):
+        facts.append(f"weapon: {row['weapon_used']}")
+
+    return {
+        "fir_number": fir,
+        "crime_type": ctype,
+        "category": row.get("crime_category"),
+        "district": district,
+        "police_station": station,
+        "occurred_at": when,
+        "status": status,
+        "summary": summary,
+        "facts": facts,
+        "modus_operandi": _short(row.get("modus_operandi"), 200),
+        "description": _short(row.get("description"), 320),
+    }
+
+
+def per_fir_briefs(crimes: list[dict], limit: int = 400, total: int | None = None) -> dict:
+    """Per-FIR briefs for the FIRs in scope (most recent first), capped at
+    ``limit`` for payload size. ``total`` reports the full in-scope count (pass
+    it when ``crimes`` is already truncated) so the UI can say 'showing N of TOTAL'."""
+    crimes = crimes or []
+    ordered = sorted(crimes, key=lambda r: (r.get("occurred_at") or ""), reverse=True)
+    items = [fir_brief(r) for r in ordered[: max(1, limit)]]
+    return {"total": total if total is not None else len(crimes),
+            "shown": len(items), "items": items}
+
+
 def _dedup(seq):
     seen = set()
     out = []

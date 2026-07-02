@@ -61,17 +61,48 @@ Views.Dashboard = (() => {
       </div>`;
   }
 
+  function renderFirBrief(b) {
+    const facts = (b.facts || []).length
+      ? `<div class="dim" style="font-size:11.5px;margin:4px 0">${b.facts.map((f) => `<span class="chip" style="margin:1px">${UI.esc(f)}</span>`).join("")}</div>`
+      : "";
+    const line = (label, val) => (val ? `<div style="font-size:12px;margin-top:3px"><span class="dim">${label}:</span> ${UI.esc(val)}</div>` : "");
+    return `<details class="fir-brief" style="border:1px solid var(--border,#22304a);border-radius:8px;padding:6px 10px;margin-bottom:6px;background:rgba(255,255,255,0.02)">
+      <summary style="cursor:pointer;list-style:none;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="chip fir">${UI.esc(b.fir_number)}</span>
+        <span style="font-size:12.5px;color:#E6EDF5">${UI.esc(b.summary)}</span>
+      </summary>
+      <div style="padding:8px 2px 4px">
+        ${facts}
+        ${line("Modus operandi", b.modus_operandi)}
+        ${line("Description", b.description)}
+        ${line("Category", b.category)}
+      </div>
+    </details>`;
+  }
+
   function renderBriefing(d) {
     const host = document.getElementById("dash-briefing");
     if (!d || !(d.sections || []).length) { host.innerHTML = UI.empty("Briefing unavailable", "", "✦"); return; }
+    const fb = d.fir_briefs || {};
+    const items = fb.items || [];
+    const firSection = items.length ? `
+      <div style="margin-top:14px;border-top:1px solid var(--border,#22304a);padding-top:10px">
+        <div style="color:#E6EDF5;font-weight:600;margin-bottom:2px;font-family:inherit">Per-FIR briefs
+          <span class="dim" style="font-weight:400;font-size:11.5px">— showing ${items.length} of ${fb.total} FIR(s) in scope, most recent first</span>
+        </div>
+        <div class="dim" style="font-size:11px;margin-bottom:8px">Click any FIR to expand its grounded brief.</div>
+        <div style="max-height:420px;overflow:auto;padding-right:4px">${items.map(renderFirBrief).join("")}</div>
+      </div>` : "";
     host.innerHTML = `<div style="font-family:Georgia,serif">
       <div style="font-size:15px;color:var(--gold);margin-bottom:4px">${UI.esc(UI.val(d.headline))}</div>
       <div class="dim" style="font-size:11px;margin-bottom:10px">${UI.esc((d.generated_at || "").slice(0, 19).replace("T", " "))}</div>
+      <div style="color:#E6EDF5;font-weight:600;margin-bottom:6px">General briefing</div>
       ${d.sections.map((s) => `<div style="margin-bottom:12px">
         <div style="color:#E6EDF5;font-weight:600;margin-bottom:3px">${UI.esc(s.title)}</div>
         <div class="dim" style="font-size:12.5px;line-height:1.55">${UI.esc(s.text)}</div>
         ${(s.citations || []).length ? `<div style="margin-top:4px">${s.citations.map((c) => `<span class="chip fir" style="margin:1px">${UI.esc(c)}</span>`).join("")}</div>` : ""}
-      </div>`).join("")}</div>`;
+      </div>`).join("")}
+      ${firSection}</div>`;
   }
 
   async function runBriefing() {

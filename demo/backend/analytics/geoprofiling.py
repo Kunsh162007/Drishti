@@ -79,9 +79,16 @@ def rossmo_surface(
         ``{points:[{lat,lng,score}], anchor:{lat,lng}, total_crimes,
         unique_locs, params}``.
     """
-    raw = [(float(c["lat"]), float(c["lng"]))
+    def _ll(c):
+        # Accept both {lat,lng} and DB-native {latitude,longitude} keys.
+        lat = c.get("lat", c.get("latitude"))
+        lng = c.get("lng", c.get("longitude"))
+        return lat, lng
+
+    raw = [(float(lat), float(lng))
            for c in (crime_locs or [])
-           if c.get("lat") is not None and c.get("lng") is not None]
+           for lat, lng in [_ll(c)]
+           if lat is not None and lng is not None]
 
     if not raw:
         return {"points": [], "anchor": None, "total_crimes": 0,
