@@ -55,6 +55,7 @@ def rossmo_surface(
     lng_min: float = 74.0,
     lng_max: float = 78.6,
     top_n: int = 1400,
+    max_points: int = 500,
 ) -> dict:
     """Compute Rossmo's CGT probability grid over a bounding box.
 
@@ -95,6 +96,12 @@ def rossmo_surface(
                 "unique_locs": 0, "params": {}}
 
     pts = _deduplicate(raw)
+
+    # Bound the compute: Rossmo is O(grid^2 * points). Evenly subsample if the
+    # deduplicated set is large so runtime stays flat on constrained instances.
+    if max_points and len(pts) > max_points:
+        step = len(pts) / max_points
+        pts = [pts[int(i * step)] for i in range(max_points)]
 
     if len(pts) < 2:
         lat0, lng0 = pts[0] if pts else raw[0]

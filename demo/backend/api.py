@@ -929,13 +929,17 @@ def geo_profile(crime_type: str = None, date_from: str = None, date_to: str = No
         from .analytics import geoprofiling as A_gp
     except Exception:
         return {"points": [], "anchor": None, "total_crimes": 0, "unique_locs": 0, "params": {}}
+    # Cap the working set: the Rossmo surface is O(grid^2 * points), so on the
+    # constrained free-tier AppSail instance we keep both bounded to stay well
+    # within memory/CPU/timeout limits while preserving a representative surface.
     rows = _dicts(
         _filtered(db, crime_type=crime_type, date_from=date_from, date_to=date_to)
         .filter(Crime.latitude.isnot(None), Crime.longitude.isnot(None))
-        .limit(2000).all()
+        .limit(600).all()
     )
     try:
-        return A_gp.rossmo_surface(rows, grid_steps=min(80, max(30, int(resolution or 60))))
+        return A_gp.rossmo_surface(rows, grid_steps=min(45, max(25, int(resolution or 40))),
+                                   max_points=500)
     except Exception as e:
         return {"points": [], "anchor": None, "total_crimes": len(rows), "unique_locs": 0,
                 "params": {}, "error": str(e)}
