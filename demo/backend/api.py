@@ -3,6 +3,7 @@
 Analytics modules are imported defensively: if a module is missing or errors, the endpoint
 degrades to a simple built-in fallback so the app always boots and never crashes a request.
 """
+import functools
 import io
 import json
 import logging
@@ -121,6 +122,40 @@ def _dicts(rows):
     return [r.as_dict() for r in rows]
 
 
+# ---- Response cache -------------------------------------------------------------------------
+# The demo dataset is static/read-only, so caching heavy analytics responses is
+# safe and turns repeat/concurrent visits into instant cache hits — critical on
+# the single 512MB free-tier AppSail instance, where recomputing over 25k rows
+# concurrently otherwise crashes it. Ingest clears the cache (see /ingest).
+import time as _time
+_RESP_CACHE: dict = {}
+_CACHE_MAX = 128
+
+
+def _cache_clear():
+    _RESP_CACHE.clear()
+
+
+def cached(ttl: int = 600):
+    """Cache a GET endpoint's return by its kwargs (excluding the db session)."""
+    def deco(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            key = (fn.__name__,) + tuple(sorted(
+                (k, v) for k, v in kwargs.items() if k != "db" and not isinstance(v, Session)))
+            hit = _RESP_CACHE.get(key)
+            now = _time.time()
+            if hit and now - hit[0] < ttl:
+                return hit[1]
+            val = fn(*args, **kwargs)
+            if len(_RESP_CACHE) >= _CACHE_MAX:
+                _RESP_CACHE.pop(next(iter(_RESP_CACHE)))
+            _RESP_CACHE[key] = (now, val)
+            return val
+        return wrapper
+    return deco
+
+
 def _h3_centroid(idx):
     if h3 and idx:
         try:
@@ -234,19 +269,27 @@ def crimes(db: Session = Depends(get_session), district=None, crime_type=None, c
 
 
 @router.get("/stats")
+@cached(600)
 def stats(db: Session = Depends(get_session), district=None, date_from=None, date_to=None):
-    rows = _dicts(_filtered(db, district=district, date_from=date_from, date_to=date_to).all())
-    by_cat = Counter(r["crime_category"] for r in rows)
-    by_dist = Counter(r["district"] for r in rows)
-    by_status = Counter(r["status"] for r in rows)
+    # SQL GROUP BY aggregation in the DB — avoids loading 25k rows into Python
+    # (which was ~25s and memory-spiked the free-tier instance into crashing).
+    base = _filtered(db, district=district, date_from=date_from, date_to=date_to)
+
+    def grouped(col):
+        return dict(base.with_entities(col, func.count(Crime.id)).group_by(col).all())
+
+    by_cat = Counter(grouped(Crime.crime_category))
+    by_dist = Counter(grouped(Crime.district))
+    by_status = Counter(grouped(Crime.status))
     by_hour = [0] * 24
-    by_month = Counter()
-    for r in rows:
-        if r["hour"] is not None:
-            by_hour[int(r["hour"])] += 1
-        by_month[(r["occurred_at"] or "")[:7]] += 1
+    for h, c in grouped(Crime.hour).items():
+        if h is not None and 0 <= int(h) < 24:
+            by_hour[int(h)] += c
+    month_col = func.substr(Crime.occurred_at, 1, 7)
+    by_month = {k: v for k, v in
+                base.with_entities(month_col, func.count(Crime.id)).group_by(month_col).all() if k}
     solved = sum(by_status.get(s, 0) for s in ("ChargeSheeted", "Closed"))
-    total = len(rows)
+    total = sum(by_cat.values())
     return {
         "kpis": {
             "total_crimes": total,
@@ -265,19 +308,18 @@ def stats(db: Session = Depends(get_session), district=None, date_from=None, dat
 
 
 @router.get("/timeseries")
+@cached(600)
 def timeseries(db: Session = Depends(get_session), district=None, crime_type=None, interval="month"):
-    rows = _dicts(_filtered(db, district=district, crime_type=crime_type).all())
     cut = {"day": 10, "week": 10, "month": 7}.get(interval, 7)
-    bucket = Counter()
-    for r in rows:
-        key = (r["occurred_at"] or "")[:cut]
-        if key:
-            bucket[key] += 1
-    return {"points": [{"period": k, "count": v} for k, v in sorted(bucket.items())]}
+    period = func.substr(Crime.occurred_at, 1, cut)
+    base = _filtered(db, district=district, crime_type=crime_type)
+    rows = base.with_entities(period, func.count(Crime.id)).group_by(period).all()
+    return {"points": [{"period": k, "count": v} for k, v in sorted(rows) if k]}
 
 
 # ---- hotspots / emerging / risk -------------------------------------------------------------
 @router.get("/hotspots")
+@cached(600)
 def hotspots(db: Session = Depends(get_session), resolution: int = 8, crime_type=None,
              date_from=None, date_to=None):
     rows = _dicts(_filtered(db, crime_type=crime_type, date_from=date_from, date_to=date_to).all())
@@ -312,6 +354,7 @@ def hotspots(db: Session = Depends(get_session), resolution: int = 8, crime_type
 
 
 @router.get("/emerging")
+@cached(600)
 def emerging(db: Session = Depends(get_session), resolution: int = 8, period_days: int = 90):
     rows = _dicts(db.query(Crime).all())
     if A_hotspots and hasattr(A_hotspots, "emerging_hotspots"):
@@ -360,6 +403,7 @@ def emerging(db: Session = Depends(get_session), resolution: int = 8, period_day
 
 
 @router.get("/risk")
+@cached(600)
 def risk(db: Session = Depends(get_session), resolution: int = 8):
     rows = _dicts(db.query(Crime).all())
     if A_risk:
@@ -415,6 +459,7 @@ def anomalies(db: Session = Depends(get_session), limit: int = 50):
 
 # ---- network / ER / MO ----------------------------------------------------------------------
 @router.get("/network")
+@cached(600)
 def network(db: Session = Depends(get_session), fir=None, person=None, depth: int = 1, limit: int = 400):
     try:
         return _network_impl(db, fir=fir, person=person, depth=depth, limit=limit)
@@ -509,8 +554,12 @@ def communities(db: Session = Depends(get_session)):
 
 
 @router.get("/entity-resolution")
+@cached(600)
 def entity_resolution(db: Session = Depends(get_session), threshold: float = 0.82, limit: int = 300):
-    persons = _dicts(db.query(Person).all())
+    # Cap the working set for the free-tier instance: loading all ~100k persons
+    # took ~38s (gateway-timeout territory). Order by normalized_name so alias
+    # clusters stay adjacent — matches are still found within the capped window.
+    persons = _dicts(db.query(Person).order_by(Person.normalized_name).limit(6000).all())
     if A_er:
         try:
             pairs = A_er.resolve_entities(persons, threshold)
@@ -554,6 +603,7 @@ def entity_resolution(db: Session = Depends(get_session), threshold: float = 0.8
 
 
 @router.get("/mo-linkage")
+@cached(600)
 def mo_linkage(db: Session = Depends(get_session), fir: str = Query(...), top_k: int = 10):
     target = db.query(Crime).filter(Crime.fir_number == fir).first()
     if not target:
@@ -673,6 +723,7 @@ async def ingest(file: UploadFile = File(...), mapping: str = Form("{}"),
             errors.append(str(e))
             skipped += 1
     db.commit()
+    _cache_clear()  # new records invalidate cached analytics responses
     return {"inserted": inserted, "skipped": skipped,
             "missing_report": {k: v for k, v in missing.most_common() if v},
             "errors": errors[:5],
@@ -722,6 +773,7 @@ def cdr_sample(db: Session = Depends(get_session)):
 
 
 @router.get("/cdr/contacts")
+@cached(600)
 def cdr_contacts(msisdn: str = Query(...), db: Session = Depends(get_session)):
     if A_cdr:
         try:
@@ -732,6 +784,7 @@ def cdr_contacts(msisdn: str = Query(...), db: Session = Depends(get_session)):
 
 
 @router.get("/cdr/network")
+@cached(600)
 def cdr_network(msisdn: str = Query(...), depth: int = 1, db: Session = Depends(get_session)):
     if A_cdr:
         try:
@@ -754,6 +807,7 @@ def cdr_tower_dump(tower: str = Query(...), start: str = None, end: str = None,
 
 # ---- Cybercrime / financial fraud -----------------------------------------------------------
 @router.get("/cyber/overview")
+@cached(600)
 def cyber_overview(db: Session = Depends(get_session)):
     try:
         crimes = [r.as_dict() for r in db.query(Crime).filter(Crime.crime_category == "Cybercrime").all()]
@@ -777,6 +831,7 @@ def cyber_overview(db: Session = Depends(get_session)):
 
 
 @router.get("/cyber/mules")
+@cached(600)
 def cyber_mules(limit: int = 50, db: Session = Depends(get_session)):
     if A_cyber:
         try:
@@ -790,6 +845,7 @@ def cyber_mules(limit: int = 50, db: Session = Depends(get_session)):
 
 
 @router.get("/cyber/money-flow")
+@cached(600)
 def cyber_money_flow(account: str = Query(...), depth: int = 2, db: Session = Depends(get_session)):
     if A_cyber:
         try:
@@ -823,6 +879,7 @@ def missing_cases(status: str = None, risk: str = None, db: Session = Depends(ge
 
 # ---- Patrol optimisation (place-based) ------------------------------------------------------
 @router.get("/patrol/optimize")
+@cached(600)
 def patrol_optimize(resolution: int = 8, units: int = 15, db: Session = Depends(get_session)):
     rows = [r.as_dict() for r in db.query(Crime).all()]
     if A_patrol:
@@ -858,6 +915,7 @@ def oversight_audit(limit: int = 50, db: Session = Depends(get_session)):
 
 # ---- Network motif detection ----------------------------------------------------------------
 @router.get("/network/motifs")
+@cached(600)
 def network_motifs(depth: int = 1, limit: int = 300, db: Session = Depends(get_session)):
     try:
         from .analytics import motifs as A_motifs
@@ -872,6 +930,7 @@ def network_motifs(depth: int = 1, limit: int = 300, db: Session = Depends(get_s
 
 # ---- ACO patrol optimisation ----------------------------------------------------------------
 @router.get("/patrol/aco")
+@cached(600)
 def patrol_aco(resolution: int = 8, units: int = 15, n_ants: int = 30, n_iter: int = 60,
                db: Session = Depends(get_session)):
     try:
@@ -906,6 +965,7 @@ def patrol_aco(resolution: int = 8, units: int = 15, n_ants: int = 30, n_iter: i
 
 # ---- Differential privacy hotspots ----------------------------------------------------------
 @router.get("/hotspots/dp")
+@cached(600)
 def hotspots_dp(epsilon: float = 1.0, resolution: int = 8,
                 crime_type: str = None, db: Session = Depends(get_session)):
     try:
@@ -923,6 +983,7 @@ def hotspots_dp(epsilon: float = 1.0, resolution: int = 8,
 
 # ---- Geographic profiling (Rossmo CGT) -------------------------------------------------------
 @router.get("/geo-profile")
+@cached(600)
 def geo_profile(crime_type: str = None, date_from: str = None, date_to: str = None,
                 resolution: int = 60, db: Session = Depends(get_session)):
     try:
@@ -947,6 +1008,7 @@ def geo_profile(crime_type: str = None, date_from: str = None, date_to: str = No
 
 # ---- Crime forecasting (Holt ETS) -----------------------------------------------------------
 @router.get("/forecast")
+@cached(600)
 def forecast_view(crime_type: str = None, district: str = None, months: int = 3,
                   db: Session = Depends(get_session)):
     try:
@@ -969,6 +1031,7 @@ def forecast_view(crime_type: str = None, district: str = None, months: int = 3,
 
 # ---- Near-repeat risk -----------------------------------------------------------------------
 @router.get("/near-repeat")
+@cached(600)
 def near_repeat(crime_type: str = None, days: int = 14, db: Session = Depends(get_session)):
     try:
         from .analytics import forecasting as A_fc
@@ -984,6 +1047,7 @@ def near_repeat(crime_type: str = None, days: int = 14, db: Session = Depends(ge
 
 # ---- Temporal analysis (day × hour matrix) --------------------------------------------------
 @router.get("/temporal")
+@cached(600)
 def temporal(district: str = None, crime_type: str = None, db: Session = Depends(get_session)):
     import datetime
     rows = _dicts(_filtered(db, district=district, crime_type=crime_type).all())
@@ -1014,6 +1078,7 @@ def temporal(district: str = None, crime_type: str = None, db: Session = Depends
 
 # ---- Suspect intelligence (deep person profile) ---------------------------------------------
 @router.get("/suspect/profile")
+@cached(600)
 def suspect_profile(name: str = Query(...), db: Session = Depends(get_session)):
     tokens = [t for t in name.split() if len(t) > 1]
     _pq = db.query(Person)
@@ -1089,6 +1154,7 @@ def cases_correlate(crime_type: str = None, district: str = None,
 
 # ---- Behavioral analytics (criminal career profile) -----------------------------------------
 @router.get("/suspect/behavior")
+@cached(600)
 def suspect_behavior(name: str = Query(...), db: Session = Depends(get_session)):
     try:
         from .analytics import behavioral as A_beh
