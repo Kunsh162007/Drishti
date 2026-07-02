@@ -170,8 +170,22 @@ def _h3_centroid(idx):
     return None, None
 
 
-def _enrich_cells(cells, rows, resolution):
-    """Attach a human-readable location (majority district + station) to each hex cell."""
+def _cell_relevance(c):
+    for k in ("count", "recent", "score", "risk_score", "risk", "intensity", "gi_score"):
+        v = c.get(k)
+        if isinstance(v, (int, float)):
+            return abs(v)
+    return 0
+
+
+def _enrich_cells(cells, rows, resolution, cap=1200):
+    """Attach a human-readable location (majority district + station) to each hex
+    cell, keeping only the top ``cap`` most-relevant cells. Capping shrinks the
+    response payload (hotspots had ~6.8k cells / 1.5MB) so it serialises,
+    transfers and renders fast on the constrained free-tier instance."""
+    cells = list(cells or [])
+    if cap and len(cells) > cap:
+        cells = sorted(cells, key=_cell_relevance, reverse=True)[:cap]
     col = f"h3_r{resolution}" if resolution in (7, 8, 9) else "h3_r8"
     by_dist = defaultdict(Counter)
     by_station = defaultdict(Counter)
@@ -350,7 +364,7 @@ def hotspots(db: Session = Depends(get_session), resolution: int = 8, crime_type
                       "significance": round(min(1.0, abs(z) / 3), 2),
                       "level": "hot" if z > 1.5 else ("cold" if z < -1.0 else "none"),
                       "lat": lat, "lng": lng})
-    return {"cells": sorted(cells, key=lambda x: -x["count"])}
+    return {"cells": sorted(cells, key=lambda x: -x["count"])[:1200]}
 
 
 @router.get("/emerging")
@@ -399,7 +413,8 @@ def emerging(db: Session = Depends(get_session), resolution: int = 8, period_day
         cells.append({"h3": hidx, "lat": lat, "lng": lng, "category": cat,
                       "recent": rec, "baseline": bas,
                       "change_pct": round(100 * change / max(1, bas), 1) if bas else None})
-    return {"cells": [c for c in cells if c["category"] != "none"]}
+    notable = [c for c in cells if c["category"] != "none"]
+    return {"cells": sorted(notable, key=lambda x: -(x.get("recent") or 0))[:1200]}
 
 
 @router.get("/risk")
