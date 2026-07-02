@@ -559,7 +559,7 @@ def entity_resolution(db: Session = Depends(get_session), threshold: float = 0.8
     # Cap the working set for the free-tier instance: loading all ~100k persons
     # took ~38s (gateway-timeout territory). Order by normalized_name so alias
     # clusters stay adjacent — matches are still found within the capped window.
-    persons = _dicts(db.query(Person).order_by(Person.normalized_name).limit(6000).all())
+    persons = _dicts(db.query(Person).order_by(Person.normalized_name).limit(2500).all())
     if A_er:
         try:
             pairs = A_er.resolve_entities(persons, threshold)

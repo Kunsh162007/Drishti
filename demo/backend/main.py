@@ -66,6 +66,39 @@ def api_root():
             "docs": "/docs", "endpoints": "/api/health, /api/meta, /api/hotspots, /api/network, ..."}
 
 
+# --- Startup cache warm-up ------------------------------------------------------------------
+# The heavy analytics take several seconds each on the free-tier instance, and AppSail
+# may run more than one container instance (each with its own in-process response cache).
+# So on boot, each instance warms the default heavy responses by hitting its own localhost
+# endpoints (identical cache keys to real requests) in a background thread — health checks
+# stay responsive, and by the time users click through, the views are served from cache.
+@app.on_event("startup")
+def _warm_cache_on_startup():
+    import threading
+    import time
+    import urllib.request
+
+    port = int(os.getenv("X_ZOHO_CATALYST_LISTEN_PORT", os.getenv("PORT", "9000")))
+    base = f"http://127.0.0.1:{port}/api"
+    paths = ["/stats", "/timeseries", "/hotspots?resolution=8", "/emerging", "/risk",
+             "/temporal", "/network", "/forecast", "/geo-profile", "/entity-resolution",
+             "/cyber/overview", "/cyber/mules", "/patrol/optimize", "/near-repeat",
+             "/hotspots/dp"]
+
+    def warm():
+        time.sleep(5)  # let uvicorn finish binding and pass initial health checks
+        for p in paths:
+            try:
+                urllib.request.urlopen(base + p, timeout=120).read()
+                logger.info("cache warmed: %s", p)
+            except Exception as e:
+                logger.warning("cache warm failed for %s: %s", p, e)
+            time.sleep(0.5)
+        logger.info("cache warm-up complete")
+
+    threading.Thread(target=warm, daemon=True, name="cache-warmer").start()
+
+
 # Serve the frontend last so it doesn't shadow /api routes.
 if config.FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(config.FRONTEND_DIR), html=True), name="frontend")
