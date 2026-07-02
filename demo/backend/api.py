@@ -136,6 +136,20 @@ def _cache_clear():
     _RESP_CACHE.clear()
 
 
+def _precomp(name):
+    """Return the build-time precomputed default response for an analytics view,
+    or None. Serving these from disk (instead of recomputing over 25k rows on
+    every request) is what keeps the heavy views fast and OOM-free on AppSail —
+    each container instance just reads a small bundled JSON file."""
+    try:
+        p = config.DATA_DIR / "precomputed" / f"{name}.json"
+        if p.exists():
+            return json.loads(p.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.warning("precomputed read failed for %s: %s", name, e)
+    return None
+
+
 def cached(ttl: int = 600):
     """Cache a GET endpoint's return by its kwargs (excluding the db session)."""
     def deco(fn):
@@ -336,6 +350,10 @@ def timeseries(db: Session = Depends(get_session), district=None, crime_type=Non
 @cached(600)
 def hotspots(db: Session = Depends(get_session), resolution: int = 8, crime_type=None,
              date_from=None, date_to=None):
+    if resolution == 8 and not crime_type and not date_from and not date_to:
+        pc = _precomp("hotspots")
+        if pc is not None:
+            return pc
     rows = _dicts(_filtered(db, crime_type=crime_type, date_from=date_from, date_to=date_to).all())
     if A_hotspots:
         try:
@@ -370,6 +388,10 @@ def hotspots(db: Session = Depends(get_session), resolution: int = 8, crime_type
 @router.get("/emerging")
 @cached(600)
 def emerging(db: Session = Depends(get_session), resolution: int = 8, period_days: int = 90):
+    if resolution == 8 and period_days == 90:
+        pc = _precomp("emerging")
+        if pc is not None:
+            return pc
     rows = _dicts(db.query(Crime).all())
     if A_hotspots and hasattr(A_hotspots, "emerging_hotspots"):
         try:
@@ -420,6 +442,10 @@ def emerging(db: Session = Depends(get_session), resolution: int = 8, period_day
 @router.get("/risk")
 @cached(600)
 def risk(db: Session = Depends(get_session), resolution: int = 8):
+    if resolution == 8:
+        pc = _precomp("risk")
+        if pc is not None:
+            return pc
     rows = _dicts(db.query(Crime).all())
     if A_risk:
         try:
@@ -476,6 +502,10 @@ def anomalies(db: Session = Depends(get_session), limit: int = 50):
 @router.get("/network")
 @cached(600)
 def network(db: Session = Depends(get_session), fir=None, person=None, depth: int = 1, limit: int = 400):
+    if not fir and not person and depth == 1 and limit == 400:
+        pc = _precomp("network")
+        if pc is not None:
+            return pc
     try:
         return _network_impl(db, fir=fir, person=person, depth=depth, limit=limit)
     except Exception:
@@ -571,6 +601,10 @@ def communities(db: Session = Depends(get_session)):
 @router.get("/entity-resolution")
 @cached(600)
 def entity_resolution(db: Session = Depends(get_session), threshold: float = 0.82, limit: int = 300):
+    if abs(threshold - 0.82) < 1e-9 and limit == 300:
+        pc = _precomp("entity_resolution")
+        if pc is not None:
+            return pc
     # Cap the working set for the free-tier instance: loading all ~100k persons
     # took ~38s (gateway-timeout territory). Order by normalized_name so alias
     # clusters stay adjacent — matches are still found within the capped window.
@@ -824,6 +858,9 @@ def cdr_tower_dump(tower: str = Query(...), start: str = None, end: str = None,
 @router.get("/cyber/overview")
 @cached(600)
 def cyber_overview(db: Session = Depends(get_session)):
+    pc = _precomp("cyber_overview")
+    if pc is not None:
+        return pc
     try:
         crimes = [r.as_dict() for r in db.query(Crime).filter(Crime.crime_category == "Cybercrime").all()]
     except Exception:
@@ -848,6 +885,10 @@ def cyber_overview(db: Session = Depends(get_session)):
 @router.get("/cyber/mules")
 @cached(600)
 def cyber_mules(limit: int = 50, db: Session = Depends(get_session)):
+    if limit == 50:
+        pc = _precomp("cyber_mules")
+        if pc is not None:
+            return pc
     if A_cyber:
         try:
             accounts = [r.as_dict() for r in db.query(Account).all()]
@@ -896,6 +937,10 @@ def missing_cases(status: str = None, risk: str = None, db: Session = Depends(ge
 @router.get("/patrol/optimize")
 @cached(600)
 def patrol_optimize(resolution: int = 8, units: int = 15, db: Session = Depends(get_session)):
+    if resolution == 8 and units == 15:
+        pc = _precomp("patrol_optimize")
+        if pc is not None:
+            return pc
     rows = [r.as_dict() for r in db.query(Crime).all()]
     if A_patrol:
         try:
@@ -983,6 +1028,10 @@ def patrol_aco(resolution: int = 8, units: int = 15, n_ants: int = 30, n_iter: i
 @cached(600)
 def hotspots_dp(epsilon: float = 1.0, resolution: int = 8,
                 crime_type: str = None, db: Session = Depends(get_session)):
+    if abs(epsilon - 1.0) < 1e-9 and resolution == 8 and not crime_type:
+        pc = _precomp("hotspots_dp")
+        if pc is not None:
+            return pc
     try:
         from .analytics import dp_hotspot as A_dp
     except Exception:
@@ -1026,6 +1075,10 @@ def geo_profile(crime_type: str = None, date_from: str = None, date_to: str = No
 @cached(600)
 def forecast_view(crime_type: str = None, district: str = None, months: int = 3,
                   db: Session = Depends(get_session)):
+    if not crime_type and not district and months == 3:
+        pc = _precomp("forecast")
+        if pc is not None:
+            return pc
     try:
         from .analytics import forecasting as A_fc
     except Exception:
@@ -1048,6 +1101,10 @@ def forecast_view(crime_type: str = None, district: str = None, months: int = 3,
 @router.get("/near-repeat")
 @cached(600)
 def near_repeat(crime_type: str = None, days: int = 14, db: Session = Depends(get_session)):
+    if not crime_type and days == 14:
+        pc = _precomp("near_repeat")
+        if pc is not None:
+            return pc
     try:
         from .analytics import forecasting as A_fc
     except Exception:
@@ -1064,6 +1121,10 @@ def near_repeat(crime_type: str = None, days: int = 14, db: Session = Depends(ge
 @router.get("/temporal")
 @cached(600)
 def temporal(district: str = None, crime_type: str = None, db: Session = Depends(get_session)):
+    if not district and not crime_type:
+        pc = _precomp("temporal")
+        if pc is not None:
+            return pc
     import datetime
     rows = _dicts(_filtered(db, district=district, crime_type=crime_type).all())
     matrix = [[0] * 24 for _ in range(7)]
