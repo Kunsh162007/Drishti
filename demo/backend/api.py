@@ -473,8 +473,12 @@ def risk(db: Session = Depends(get_session), resolution: int = 8):
 
 
 @router.get("/anomalies")
+@cached(600)
 def anomalies(db: Session = Depends(get_session), limit: int = 50):
-    rows = _dicts(db.query(Crime).all())
+    # Cap the working set (recent 6k) so this stays light on the free-tier
+    # instance — loading all 25k rows OOM-crashed it (and cascaded to /briefing,
+    # which calls this internally, returning empty responses).
+    rows = _dicts(db.query(Crime).order_by(Crime.occurred_at.desc()).limit(6000).all())
     if A_anomaly:
         try:
             return {"items": A_anomaly.detect_anomalies(rows, limit)}
@@ -955,6 +959,9 @@ def patrol_optimize(resolution: int = 8, units: int = 15, db: Session = Depends(
 # ---- Oversight: fairness diagnostics + audit ledger -----------------------------------------
 @router.get("/oversight/fairness")
 def oversight_fairness(db: Session = Depends(get_session)):
+    pc = _precomp("oversight_fairness")
+    if pc is not None:
+        return pc
     rows = [r.as_dict() for r in db.query(Crime).all()]
     if A_oversight:
         try:
